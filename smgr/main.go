@@ -12,9 +12,6 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// parse flags
-
-// Review password length
 type fetchFlags struct {
 	Token      string `san:"trim"`
 	Repository string `san:"trim"`
@@ -62,5 +59,3 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 
 	return rootCmd
 }
-
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
