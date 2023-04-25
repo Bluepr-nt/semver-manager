@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
-	"semver-manager.thephoenixhomelab.com/internal/utils"
-	services "semver-manager.thephoenixhomelab.com/pkg"
+	"github.com/13013SwagR/semver-manager/src/internal/utils"
+	services "github.com/13013SwagR/semver-manager/src/pkg"
 )
 
 type config struct {

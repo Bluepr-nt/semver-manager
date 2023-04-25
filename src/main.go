@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"k8s.io/klog/v2"
-	fetch "semver-manager.thephoenixhomelab.com/cmd"
-	"semver-manager.thephoenixhomelab.com/internal/utils"
+	fetch "github.com/13013SwagR/semver-manager/src/cmd"
+	"github.com/13013SwagR/semver-manager/src/internal/utils"
 )
 
 // parse flags

@@ -1,4 +1,4 @@
-module semver-manager.thephoenixhomelab.com
+module github.com/13013SwagR/semver-manager/src
 
 go 1.20
 
