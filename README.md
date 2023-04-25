@@ -44,23 +44,10 @@ To install Semver-Manager, you can download the binary for your platform from th
 
 Prerequisites:
 
-- [Go](https://golang.org/dl/) 1.16+ installed and configured
+- [Go](https://golang.org/dl/) 1.20+ installed and configured
 
 ```sh
-# Clone the repository
-git clone https://github.com/13013SwagR/semver-manager.git
-
-# Change to the project directory
-cd semver-manager/src
-
-# Build the binary
-go build -o smgr
-
-# Make binary executable
-chmod +x smgr
-
-# Move the binary to a directory in your system's PATH
-sudo mv semver-manager /usr/local/bin/
+go install github.com/13013SwagR/semver-manager/smgr@<git_ref>
 ```
 
 ## Usage

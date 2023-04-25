@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
+	services "github.com/13013SwagR/semver-manager/smgr/pkg"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
-	"github.com/13013SwagR/semver-manager/src/internal/utils"
-	services "github.com/13013SwagR/semver-manager/src/pkg"
 )
 
 type config struct {

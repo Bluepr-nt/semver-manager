@@ -13,7 +13,6 @@ func Test_GetHighestSemver(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// Test cases here
 		{
 			name: "Empty tags list",
 			fields: SemverSvc{

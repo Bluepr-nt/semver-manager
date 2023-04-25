@@ -7,14 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	fetch "github.com/13013SwagR/semver-manager/smgr/cmd/fetch"
+	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
 	"k8s.io/klog/v2"
-	fetch "github.com/13013SwagR/semver-manager/src/cmd"
-	"github.com/13013SwagR/semver-manager/src/internal/utils"
 )
 
-// parse flags
-
-// Review password length
 type fetchFlags struct {
 	Token      string `san:"trim"`
 	Repository string `san:"trim"`
@@ -62,5 +59,3 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 
 	return rootCmd
 }
-
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
