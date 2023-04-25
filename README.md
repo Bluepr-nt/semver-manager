@@ -51,7 +51,7 @@ Prerequisites:
 git clone https://github.com/13013SwagR/semver-manager.git
 
 # Change to the project directory
-cd semver-manager/src
+cd semver-manager/smgr
 
 # Build the binary
 go build -o smgr

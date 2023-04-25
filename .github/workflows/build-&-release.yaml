@@ -14,7 +14,7 @@ jobs:
           go-version: '^1.20.3'
           check-latest: true
           cache-dependency-path: subdir/go.sum
-      - run: cd src; go test ./...
+      - run: cd smgr; go test ./...
   build:
     needs: [tests]
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
         run: |
           echo "BUILD_ID=$(echo ${GITHUB_SHA} | cut -c1-7)-$(date '+%Y%m%dT%H%M%S')" >> $GITHUB_OUTPUT
       - name: Create artifact
-        run: cd src; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} 
+        run: cd smgr; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} 
       - name: validate build artifact creation
         run: ls -al 
       - name: Upload a Build Artifact
