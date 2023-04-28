@@ -55,7 +55,7 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 
 	rootCmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
 	rootCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
-	rootCmd.AddCommand(fetch.NewFetchCommand(output))
+	rootCmd.AddCommand(fetch.NewFetchCommand())
 
 	return rootCmd
 }

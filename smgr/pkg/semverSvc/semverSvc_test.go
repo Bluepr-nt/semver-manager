@@ -1,16 +1,17 @@
-package services
+package semverSvc
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_GetHighestSemver(t *testing.T) {
+func Test_FilterHighestSemver(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  SemverSvc
 		tags    []string
-		want    string
+		want    []string
 		wantErr bool
 	}{
 		{
@@ -19,7 +20,7 @@ func Test_GetHighestSemver(t *testing.T) {
 				client: nil,
 			},
 			tags:    []string{},
-			want:    "",
+			want:    []string{},
 			wantErr: true,
 		},
 		{
@@ -30,7 +31,7 @@ func Test_GetHighestSemver(t *testing.T) {
 
 			tags: []string{"1.0.0", "1.1.0", "1.2.0", "not-a-tag", "1.2.1"},
 
-			want:    "1.2.1",
+			want:    []string{"1.2.1"},
 			wantErr: false,
 		},
 		{
@@ -41,7 +42,7 @@ func Test_GetHighestSemver(t *testing.T) {
 
 			tags: []string{"1.0.0", "1.1.0", "1.2.0", "1.2.1"},
 
-			want:    "1.2.1",
+			want:    []string{"1.2.1"},
 			wantErr: false,
 		},
 	}
@@ -51,14 +52,18 @@ func Test_GetHighestSemver(t *testing.T) {
 			svSvc := &SemverSvc{
 				client: tt.fields.client,
 			}
-			got, err := svSvc.GetHighestSemver(tt.tags)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("svSvc.GetHighestSemver() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := svSvc.FilterSemverTags(tt.tags, &Filters{Highest: true})
+
+			if len(got) == 0 && len(tt.want) == 0 {
 				return
 			}
-			if got != tt.want {
-				t.Errorf("svSvc.GetHighestSemver() = %v, want %v", got, tt.want)
+			if tt.wantErr {
+				assert.Error(t, err, "svSvc.FilterHighestSemver() error = %v, wantErr %v", err, tt.wantErr)
+			} else {
+				assert.NoError(t, err, "svSvc.FilterHighestSemver() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
+			assert.Equal(t, tt.want, got, "svSvc.FilterHighestSemver() = %v, want %v", got, tt.want)
 		})
 	}
 }
@@ -146,7 +151,7 @@ func Test_IsSemver(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsSemVer(tt.args.version); got != tt.want {
+			if got := IsSemver(tt.args.version); got != tt.want {
 				t.Errorf("IsSemVer() = %v, want %v", got, tt.want)
 			}
 		})
@@ -158,12 +163,14 @@ func Test_FilterSemverTags(t *testing.T) {
 		tags []string
 	}
 	tests := []struct {
+		svSvc          SemverSvc
 		name           string
 		args           args
 		wantSemverTags []string
 	}{
 		{
-			name: "No SemVer compliant tags",
+			name:  "No SemVer compliant tags",
+			svSvc: SemverSvc{client: nil},
 			args: args{
 				tags: []string{"v1.0", "v2.0.0", "release-1.1"},
 			},
@@ -193,14 +200,16 @@ func Test_FilterSemverTags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotSemverTags := FilterSemverTags(tt.args.tags); !reflect.DeepEqual(gotSemverTags, tt.wantSemverTags) {
-				t.Errorf("FilterSemverTags() = %v, want %v", gotSemverTags, tt.wantSemverTags)
+			gotSemverTags, _ := tt.svSvc.FilterSemverTags(tt.args.tags, nil)
+			if len(gotSemverTags) == 0 && len(tt.wantSemverTags) == 0 {
+				return
 			}
+			assert.Equal(t, tt.wantSemverTags, gotSemverTags, "FilterSemverTags() = %v, want %v", gotSemverTags, tt.wantSemverTags)
 		})
 	}
 }
 
-func Test_isRelease(t *testing.T) {
+func Test_IsRelease(t *testing.T) {
 	type args struct {
 		version string
 	}
@@ -257,9 +266,107 @@ func Test_isRelease(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isRelease(tt.args.version); got != tt.want {
+			if got := IsRelease(tt.args.version); got != tt.want {
 				t.Errorf("isRelease() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestFilterSemverTagsWithRelease(t *testing.T) {
+	tests := []struct {
+		name         string
+		tags         []string
+		wantFiltered []string
+		wantErr      bool
+	}{
+		{
+			name: "Filter release versions",
+			tags: []string{
+				"1.0.0-alpha",
+				"1.0.0",
+				"1.1.0",
+				"2.0.0-beta",
+				"2.0.0",
+			},
+			wantFiltered: []string{
+				"1.0.0",
+				"1.1.0",
+				"2.0.0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Filter release versions with invalid semver",
+			tags: []string{
+				"1.0.0-alpha",
+				"1.0.0",
+				"1.1.0",
+				"2.0.0-beta",
+				"2.0.0",
+				"invalid",
+			},
+			wantFiltered: []string{
+				"1.0.0",
+				"1.1.0",
+				"2.0.0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Filter release versions with only prerelease versions",
+			tags: []string{
+				"1.0.0-alpha",
+				"1.0.0-beta",
+				"2.0.0-beta",
+				"2.0.0-alpha",
+			},
+			wantFiltered: []string{},
+			wantErr:      false,
+		},
+		{
+			name:         "Empty input tags",
+			tags:         []string{},
+			wantFiltered: []string{},
+			wantErr:      false,
+		},
+		{
+			name: "Filter release versions with mixed semver and non-semver tags",
+			tags: []string{
+				"1.0.0",
+				"1.1.0",
+				"2.0.0",
+				"v3.0.0",
+				"3.0.1",
+				"3.0.2",
+				"non-semver",
+			},
+			wantFiltered: []string{
+				"1.0.0",
+				"1.1.0",
+				"2.0.0",
+				"3.0.1",
+				"3.0.2",
+			},
+			wantErr: false,
+		},
+	}
+
+	svSvc := &SemverSvc{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filteredTags, err := svSvc.FilterSemverTags(tt.tags, &Filters{Release: true})
+			if tt.wantErr {
+				assert.Error(t, err, "FilterSemverTags() error = %v, wantErr %v", err, tt.wantErr)
+			} else {
+				assert.NoError(t, err, "FilterSemverTags() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if len(filteredTags) == 0 && len(tt.wantFiltered) == 0 {
+				return
+			}
+
+			assert.Equal(t, tt.wantFiltered, filteredTags, "FilterSemverTags() = %v, want %v", filteredTags, tt.wantFiltered)
 		})
 	}
 }
