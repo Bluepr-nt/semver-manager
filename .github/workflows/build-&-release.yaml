@@ -13,7 +13,7 @@ jobs:
         with:
           go-version: '^1.20.3'
           check-latest: true
-          cache-dependency-path: subdir/go.sum
+          cache-dependency-path: smgr/go.sum
       - run: cd smgr; go test ./...
   build:
     needs: [tests]
@@ -26,13 +26,13 @@ jobs:
         with:
           go-version: '^1.20.3'
           check-latest: true
-          cache-dependency-path: subdir/go.sum
+          cache-dependency-path: src/go.sum
       - name: Generate BUILD_ID
         id: build_number 
         run: |
           echo "BUILD_ID=$(echo ${GITHUB_SHA} | cut -c1-7)-$(date '+%Y%m%dT%H%M%S')" >> $GITHUB_OUTPUT
       - name: Create artifact
-        run: cd smgr; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} 
+        run: cd src; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} ./cmd/smgr
       - name: validate build artifact creation
         run: ls -al 
       - name: Upload a Build Artifact
