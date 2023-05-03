@@ -16,7 +16,6 @@ jobs:
           cache-dependency-path: smgr/go.sum
       - run: cd src; go test ./...
   build:
-    needs: [tests]
     runs-on: ubuntu-latest
     outputs:
       BUILD_ID: ${{ steps.build_number.outputs.BUILD_ID }}
@@ -48,7 +47,7 @@ jobs:
       contents: write
       packages: write
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, tests]
     outputs:
       RELEASE_VERSION: ${{ steps.release_version.outputs.RELEASE_VERSION }}
       VERSION_TAG: ${{ steps.new_version.outputs.version_tag }}
