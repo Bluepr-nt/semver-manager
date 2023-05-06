@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
-	smvr "github.com/13013SwagR/semver-manager/smgr/pkg/semverSvc"
+	smvr "github.com/13013SwagR/semver-manager/smgr/pkg/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )
@@ -66,7 +66,7 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command) error {
 	return nil
 }
 
-func newSemverSvc(dryRun bool, platform, token string) smvr.SemverSvc {
+func newSemverSvc(dryRun bool, platform, token string) smvr.Semver {
 	if len(platform) == 0 {
 		platform = "github"
 	}

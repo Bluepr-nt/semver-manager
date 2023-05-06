@@ -1,4 +1,4 @@
-package semverSvc
+package semver
 
 import (
 	"testing"
@@ -9,14 +9,14 @@ import (
 func Test_FilterHighestSemver(t *testing.T) {
 	tests := []struct {
 		name    string
-		fields  SemverSvc
+		fields  Semver
 		tags    []string
 		want    []string
 		wantErr bool
 	}{
 		{
 			name: "Empty tags list",
-			fields: SemverSvc{
+			fields: Semver{
 				client: nil,
 			},
 			tags:    []string{},
@@ -25,7 +25,7 @@ func Test_FilterHighestSemver(t *testing.T) {
 		},
 		{
 			name: "Non-SemVer compliant tags",
-			fields: SemverSvc{
+			fields: Semver{
 				client: nil,
 			},
 
@@ -36,7 +36,7 @@ func Test_FilterHighestSemver(t *testing.T) {
 		},
 		{
 			name: "SemVer compliant tags",
-			fields: SemverSvc{
+			fields: Semver{
 				client: nil,
 			},
 
@@ -49,7 +49,7 @@ func Test_FilterHighestSemver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svSvc := &SemverSvc{
+			svSvc := &Semver{
 				client: tt.fields.client,
 			}
 			got, err := svSvc.FilterSemverTags(tt.tags, &Filters{Highest: true})
@@ -163,14 +163,14 @@ func Test_FilterSemverTags(t *testing.T) {
 		tags []string
 	}
 	tests := []struct {
-		svSvc          SemverSvc
+		svSvc          Semver
 		name           string
 		args           args
 		wantSemverTags []string
 	}{
 		{
 			name:  "No SemVer compliant tags",
-			svSvc: SemverSvc{client: nil},
+			svSvc: Semver{client: nil},
 			args: args{
 				tags: []string{"v1.0", "v2.0.0", "release-1.1"},
 			},
@@ -352,7 +352,7 @@ func TestFilterSemverTagsWithRelease(t *testing.T) {
 		},
 	}
 
-	svSvc := &SemverSvc{}
+	svSvc := &Semver{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

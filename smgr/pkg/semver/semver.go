@@ -1,4 +1,4 @@
-package semverSvc
+package semver
 
 import (
 	"context"
@@ -25,11 +25,11 @@ func (drySv *DrySemverClient) listTags(owner string, repo string) ([]string, err
 	return []string{}, nil
 }
 
-type SemverSvcI interface {
+type SemverI interface {
 	FetchSemverTags() ([]string, error)
 }
 
-type SemverSvc struct {
+type Semver struct {
 	client SemverClient
 }
 
@@ -80,38 +80,38 @@ func (ghClient *GithubClient) listTags(owner string, repo string) ([]string, err
 	return tagList, nil
 }
 
-func NewSemverSvc(platform, token string) (svc SemverSvc) {
+func NewSemverSvc(platform, token string) (svc Semver) {
 	if platform == "github" {
 		newGithubClient(token)
 
-		svc = SemverSvc{client: newGithubClient(token)}
+		svc = Semver{client: newGithubClient(token)}
 	} else if platform == "dry-run" {
-		svc = SemverSvc{client: &DrySemverClient{}}
+		svc = Semver{client: &DrySemverClient{}}
 	}
 
 	return svc
 }
 
-func (svSvc *SemverSvc) FetchSemverTags(owner, repo string, filters *Filters) (tagList []string, err error) {
-	if svSvc.client == nil {
+func (s *Semver) FetchSemverTags(owner, repo string, filters *Filters) (tagList []string, err error) {
+	if s.client == nil {
 		return nil, fmt.Errorf("git platform client is not defined")
 	}
 
-	tagList, err = svSvc.client.listTags(owner, repo)
+	tagList, err = s.client.listTags(owner, repo)
 
 	if err != nil {
 		return nil, err
 	}
 
-	semverTags, err := svSvc.FilterSemverTags(tagList, filters)
+	semverTags, err := s.FilterSemverTags(tagList, filters)
 	return semverTags, err
 }
 
-func (svSvc *SemverSvc) FilterHighestSemver(semverList []string) (string, error) {
+func (s *Semver) FilterHighestSemver(semverList []string) (string, error) {
 	if semverList == nil || len(semverList) < 1 {
 		return "", fmt.Errorf("error the semantic version list is empty")
 	}
-	semverTags, err := svSvc.FilterSemverTags(semverList, nil)
+	semverTags, err := s.FilterSemverTags(semverList, nil)
 	if err != nil {
 		return "", err
 	}
@@ -152,23 +152,23 @@ func AreSemver(versions []string) bool {
 	return true
 }
 
-func (svSvc *SemverSvc) FilterSemverTags(tags []string, filters *Filters) ([]string, error) {
+func (s *Semver) FilterSemverTags(tags []string, filters *Filters) ([]string, error) {
 	var err error
 	filteredTags := removeNonCompliantTags(tags)
-	filteredTags, err = svSvc.SortTags(filteredTags)
+	filteredTags, err = s.SortTags(filteredTags)
 	if err != nil {
 		return nil, err
 	}
 
 	if filters != nil && filters.Release {
-		filteredTags, err = svSvc.FilterSemverRelease(filteredTags)
+		filteredTags, err = s.FilterSemverRelease(filteredTags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if filters != nil && filters.Highest && len(filteredTags) > 0 {
-		highestVersion, err := svSvc.FilterHighestSemver(filteredTags)
+		highestVersion, err := s.FilterHighestSemver(filteredTags)
 		if err != nil {
 			return nil, err
 		}
@@ -178,9 +178,9 @@ func (svSvc *SemverSvc) FilterSemverTags(tags []string, filters *Filters) ([]str
 	return filteredTags, nil
 }
 
-func (svSvc *SemverSvc) FilterSemverRelease(tags []string) ([]string, error) {
+func (s *Semver) FilterSemverRelease(tags []string) ([]string, error) {
 	var releaseVersions []*semver.Version
-	versions, err := svSvc.stringsToVersions(tags)
+	versions, err := s.stringsToVersions(tags)
 	if err != nil {
 		return nil, err
 	}
@@ -189,17 +189,17 @@ func (svSvc *SemverSvc) FilterSemverRelease(tags []string) ([]string, error) {
 			releaseVersions = append(releaseVersions, v)
 		}
 	}
-	releaseTag := svSvc.versionsToStrings(releaseVersions)
+	releaseTag := s.versionsToStrings(releaseVersions)
 	return releaseTag, nil
 }
 
-func (svSvc *SemverSvc) SortTags(tags []string) ([]string, error) {
-	versions, err := svSvc.stringsToVersions(tags)
+func (s *Semver) SortTags(tags []string) ([]string, error) {
+	versions, err := s.stringsToVersions(tags)
 	if err != nil {
 		return nil, err
 	}
 	sort.Sort(semver.Collection(versions))
-	sortedTags := svSvc.versionsToStrings(versions)
+	sortedTags := s.versionsToStrings(versions)
 	return sortedTags, nil
 }
 func removeNonCompliantTags(tags []string) []string {
@@ -212,7 +212,7 @@ func removeNonCompliantTags(tags []string) []string {
 	return semverTags
 }
 
-func (svSvc *SemverSvc) versionsToStrings(versions []*semver.Version) []string {
+func (s *Semver) versionsToStrings(versions []*semver.Version) []string {
 	var tags []string
 	for _, version := range versions {
 		tags = append(tags, version.String())
@@ -220,7 +220,7 @@ func (svSvc *SemverSvc) versionsToStrings(versions []*semver.Version) []string {
 	return tags
 }
 
-func (svSvc *SemverSvc) stringsToVersions(tags []string) ([]*semver.Version, error) {
+func (s *Semver) stringsToVersions(tags []string) ([]*semver.Version, error) {
 	var semverVersions []*semver.Version
 
 	for _, tag := range tags {
