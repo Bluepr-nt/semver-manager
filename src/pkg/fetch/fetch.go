@@ -3,13 +3,14 @@ package fetch
 import (
 	"errors"
 
-	"src/datasource/github"
-	"src/datasource/gitlab"
-	"src/datasource/oci"
+	"github.com/13013SwagR/semver-manager/src/datastores/github"
+	"github.com/13013SwagR/semver-manager/src/datastores/gitlab"
+	"github.com/13013SwagR/semver-manager/src/datastores/oci"
+	"github.com/13013SwagR/semver-manager/src/models"
 )
 
 type Fetcher interface {
-	FetchTags() ([]string, error)
+	FetchTags() ([]models.Version, error)
 }
 
 type Config struct {
@@ -19,7 +20,7 @@ type Config struct {
 	Platform   string
 }
 
-func NewFetcher(config *Config) (Fetcher, error) {
+func NewFetcher(config *models.Config) (Fetcher, error) {
 	switch config.Platform {
 	case "github":
 		return github.NewFetcher(config), nil
