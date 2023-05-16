@@ -46,7 +46,7 @@ func Highest() FilterFunc {
 		for _, version := range versions[1:] {
 			semverVersion, _ := semver.ParseTolerant(version.String())
 			highestSemver, _ := semver.ParseTolerant(highest.String())
-
+			semver.Parse("")
 			if semverVersion.GT(highestSemver) {
 				highest = version
 			}
