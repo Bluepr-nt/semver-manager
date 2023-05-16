@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"fmt"
 	"src/pkg/fetch/models"
 
 	"github.com/blang/semver/v4"
@@ -39,7 +40,7 @@ func ReleaseOnly() FilterFunc {
 func Highest() FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		if len(versions) == 0 {
-			return versions, nil
+			return versions, fmt.Errorf("error version list is empty")
 		}
 
 		highest := versions[0]
@@ -61,7 +62,7 @@ func MajorVersionStream(major uint64) FilterFunc {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if version.Major == major {
+			if version.Release.Major == major {
 				filtered = append(filtered, version)
 			}
 		}
@@ -75,7 +76,7 @@ func MinorVersionStream(major, minor uint64) FilterFunc {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if version.Major == major && version.Minor == minor {
+			if version.Release.Major == major && version.Release.Minor == minor {
 				filtered = append(filtered, version)
 			}
 		}
@@ -89,7 +90,7 @@ func PatchVersionStream(major, minor, patch uint64) FilterFunc {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if version.Major == major && version.Minor == minor && version.Patch == patch {
+			if version.Release.Major == major && version.Release.Minor == minor && version.Release.Patch == patch {
 				filtered = append(filtered, version)
 			}
 		}
@@ -103,7 +104,7 @@ func PreReleaseVersionStream(major, minor, patch uint64, prerelease []string) Fi
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if version.Major == major && version.Minor == minor && version.Patch == patch {
+			if version.Release.Major == major && version.Release.Minor == minor && version.Release.Patch == patch {
 				matchingPreRelease := matchPreRelease(version.Prerelease, prerelease)
 				if matchingPreRelease {
 					filtered = append(filtered, version)

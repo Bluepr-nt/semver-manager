@@ -95,7 +95,6 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 			},
 			expectedTags: "0.0.4 1.0.0 1.0.0+0.build.1-rc.10000aaa-kk-0.1 1.1.2+meta 1.1.2+meta-valid 1.1.7 1.2.3 2.0.0+build.1848 2.0.0 10.20.30\n",
 		},
-		// ... add more test cases
 	}
 
 	for _, tc := range tests {
