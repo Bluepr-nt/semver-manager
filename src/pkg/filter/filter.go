@@ -99,12 +99,12 @@ func PatchVersionStream(major, minor, patch uint64) FilterFunc {
 	}
 }
 
-func PreReleaseVersionStream(major, minor, patch uint64, prerelease []string) FilterFunc {
+func PreReleaseVersionStream(release models.Release, prerelease models.PRVersion) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if version.Release.Major == major && version.Release.Minor == minor && version.Release.Patch == patch {
+			if version.Release == release {
 				matchingPreRelease := matchPreRelease(version.Prerelease, prerelease)
 				if matchingPreRelease {
 					filtered = append(filtered, version)
@@ -116,13 +116,13 @@ func PreReleaseVersionStream(major, minor, patch uint64, prerelease []string) Fi
 	}
 }
 
-func matchPreRelease(prVersion models.PRVersion, prerelease []string) bool {
-	if len(prVersion.Identifiers) < len(prerelease) {
+func matchPreRelease(prVersion models.PRVersion, prerelease models.PRVersion) bool {
+	if len(prVersion.Identifiers) < len(prerelease.Identifiers) {
 		return false
 	}
 
-	for i, prIdentifier := range prerelease {
-		if prVersion.Identifiers[i].String() != prIdentifier {
+	for i, prIdentifier := range prerelease.Identifiers {
+		if prVersion.Identifiers[i].String() != prIdentifier.String() {
 			return false
 		}
 	}

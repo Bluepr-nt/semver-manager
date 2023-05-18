@@ -3,4 +3,24 @@
     "rootcmd",
     "smgr"
   ],
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#dddb08",
+    "activityBar.background": "#dddb08",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#069a98",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#15202b99",
+    "sash.hoverBorder": "#dddb08",
+    "statusBar.background": "#acaa06",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#7b7904",
+    "statusBarItem.remoteBackground": "#acaa06",
+    "statusBarItem.remoteForeground": "#15202b",
+    "titleBar.activeBackground": "#acaa06",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#acaa0699",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#acaa06",
 }

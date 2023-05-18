@@ -198,6 +198,18 @@ func (pr *PRVersion) String() string {
 	return ""
 }
 
+func NewPRVersion(identifiers []string) (PRVersion, error) {
+	prVersion := PRVersion{}
+	for _, identifier := range identifiers {
+		prIdentifier, err := NewPrIdentifier(identifier)
+		if err != nil {
+			return PRVersion{}, err
+		}
+		prVersion.Identifiers = append(prVersion.Identifiers, prIdentifier)
+	}
+	return prVersion, nil
+}
+
 type BuildMetadata struct {
 	Identifiers []BuildIdentifier
 }
