@@ -9,7 +9,7 @@ import (
 
 type FilterFunc func(versions []models.Version) ([]models.Version, error)
 
-func ApplyFilters(versions []models.Version, filters ...FilterFunc) ([]models.Version, error) {
+func ApplyFilters(versions []models.Version, filters ...FilterFunc) (models.VersionSlice, error) {
 	var err error
 	filtered := versions
 

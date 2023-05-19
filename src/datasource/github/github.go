@@ -1,12 +1,15 @@
 package github
 
-import "src/pkg/fetch/models"
+import (
+	"src/pkg/fetch/models"
+	"src/pkg/fetch/util"
+)
 
 type GithubClient struct {
-	config *models.DatasourceConfig
+	config *util.DatasourceConfig
 }
 
-func NewFetcher(config *models.DatasourceConfig) *GithubClient {
+func NewFetcher(config *util.DatasourceConfig) *GithubClient {
 	return &GithubClient{config: config}
 }
 

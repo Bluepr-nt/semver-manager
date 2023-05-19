@@ -43,7 +43,7 @@ func TestNewBuildIdentifier(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewBuildIdentifier(tt.args.v)
+			got, err := ParseBuildIdentifier(tt.args.v)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -79,7 +79,7 @@ func TestNewPrIdentifier(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewPrIdentifier(tt.input)
+			got, err := ParsePrIdentifier(tt.input)
 
 			assert.Equal(t, tt.wantErr, err != nil, "NewPrIdentifier() error = %v, wantErr %v", err, tt.wantErr)
 			assert.Equal(t, tt.want, got, "NewPrIdentifier() = %v, want %v", got, tt.want)
@@ -246,7 +246,7 @@ func TestNewVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewVersion(tt.input)
+			got, err := ParseVersion(tt.input)
 
 			assert.Equal(t, tt.wantErr, err != nil, "NewVersion() error = %v, wantErr %v", err, tt.wantErr)
 			assert.Equal(t, tt.want, got, "NewVersion() = %v, want %v", got, tt.want)

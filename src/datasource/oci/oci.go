@@ -1,12 +1,15 @@
 package oci
 
-import "src/pkg/fetch/models"
+import (
+	"src/pkg/fetch/models"
+	"src/pkg/fetch/util"
+)
 
 type OciCLient struct {
-	config *models.DatasourceConfig
+	config *util.DatasourceConfig
 }
 
-func NewFetcher(config *models.DatasourceConfig) *OciCLient {
+func NewFetcher(config *util.DatasourceConfig) *OciCLient {
 	return &OciCLient{config: config}
 }
 

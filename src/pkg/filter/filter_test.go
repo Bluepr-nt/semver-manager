@@ -168,12 +168,12 @@ func TestHighest(t *testing.T) {
 }
 
 func newPrIdentifier(v string) models.PRIdentifier {
-	i, _ := models.NewPrIdentifier(v)
+	i, _ := models.ParsePrIdentifier(v)
 	return i
 }
 
 func newBuildIdentifier(v string) models.BuildIdentifier {
-	i, _ := models.NewBuildIdentifier(v)
+	i, _ := models.ParseBuildIdentifier(v)
 	return i
 }
 
@@ -386,7 +386,7 @@ func TestPreReleaseVersionStream(t *testing.T) {
 }
 
 func newPRVersion(identifiers []string) (p models.PRVersion) {
-	p, _ = models.NewPRVersion(identifiers)
+	p, _ = models.ParsePRVersion(identifiers)
 	return
 }
 

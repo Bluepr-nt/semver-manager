@@ -12,13 +12,6 @@ const (
 	alphanum        = alphas + numbers
 )
 
-type DatasourceConfig struct {
-	Owner      string
-	Repository string
-	Token      string
-	Platform   string
-}
-
 type Release struct {
 	Major uint64
 	Minor uint64
@@ -40,7 +33,7 @@ func (v *Version) String() string {
 	return version
 }
 
-func NewVersion(v string) (Version, error) {
+func ParseVersion(v string) (Version, error) {
 
 	release, err := parseRelease(v)
 	if err != nil {
@@ -65,6 +58,21 @@ func NewVersion(v string) (Version, error) {
 		nil
 }
 
+type VersionSlice []Version
+
+func (vs VersionSlice) String() string {
+	var builder strings.Builder
+
+	for i, version := range vs {
+		builder.WriteString(version.String())
+		if i < len(vs)-1 {
+			builder.WriteString(", ")
+		}
+	}
+
+	return builder.String()
+}
+
 func parseBuildMetadata(v string) (BuildMetadata, error) {
 	tokens := strings.SplitN(v, "+", 2)
 	if len(tokens) < 2 {
@@ -74,7 +82,7 @@ func parseBuildMetadata(v string) (BuildMetadata, error) {
 	identifiers := strings.Split(metadata, ".")
 	buildIdentifiers := []BuildIdentifier{}
 	for _, identifier := range identifiers {
-		buildIdentifier, err := NewBuildIdentifier(identifier)
+		buildIdentifier, err := ParseBuildIdentifier(identifier)
 		if err != nil {
 			return BuildMetadata{}, err
 		}
@@ -120,7 +128,7 @@ func parsePrerelease(v string) (PRVersion, error) {
 	identifiers := strings.Split(pr, ".")
 	prIdentifiers := []PRIdentifier{}
 	for _, identifier := range identifiers {
-		prIdentifier, err := NewPrIdentifier(identifier)
+		prIdentifier, err := ParsePrIdentifier(identifier)
 		if err != nil {
 			return PRVersion{}, err
 		}
@@ -198,10 +206,10 @@ func (pr *PRVersion) String() string {
 	return ""
 }
 
-func NewPRVersion(identifiers []string) (PRVersion, error) {
+func ParsePRVersion(identifiers []string) (PRVersion, error) {
 	prVersion := PRVersion{}
 	for _, identifier := range identifiers {
-		prIdentifier, err := NewPrIdentifier(identifier)
+		prIdentifier, err := ParsePrIdentifier(identifier)
 		if err != nil {
 			return PRVersion{}, err
 		}
@@ -234,7 +242,7 @@ func (i *PRIdentifier) String() string {
 	return i.identifier
 }
 
-func NewPrIdentifier(v string) (PRIdentifier, error) {
+func ParsePrIdentifier(v string) (PRIdentifier, error) {
 	i := PRIdentifier{}
 	if err := i.Set(v); err != nil {
 		return PRIdentifier{}, err
@@ -281,7 +289,7 @@ type BuildIdentifier struct {
 	identifier string
 }
 
-func NewBuildIdentifier(v string) (BuildIdentifier, error) {
+func ParseBuildIdentifier(v string) (BuildIdentifier, error) {
 	i := BuildIdentifier{}
 	if err := i.Set(v); err != nil {
 		return BuildIdentifier{}, err

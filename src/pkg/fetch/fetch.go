@@ -7,13 +7,14 @@ import (
 	"src/pkg/fetch/datasource/gitlab"
 	"src/pkg/fetch/datasource/oci"
 	"src/pkg/fetch/models"
+	"src/pkg/fetch/util"
 )
 
 type Fetcher interface {
 	FetchTags() ([]models.Version, error)
 }
 
-func NewFetcher(config *models.DatasourceConfig) (Fetcher, error) {
+func NewFetcher(config *util.DatasourceConfig) (Fetcher, error) {
 	switch config.Platform {
 	case "github":
 		return github.NewFetcher(config), nil
