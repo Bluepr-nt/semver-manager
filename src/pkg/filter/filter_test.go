@@ -29,7 +29,7 @@ func TestHighest(t *testing.T) {
 							newPrIdentifier("1"),
 						},
 					},
-					Build: models.BuildMetadata{
+					BuildMetadata: models.BuildMetadata{
 						Identifiers: []models.BuildIdentifier{
 							newBuildIdentifier("054"),
 						},
@@ -46,7 +46,7 @@ func TestHighest(t *testing.T) {
 							newPrIdentifier("1"),
 						},
 					},
-					Build: models.BuildMetadata{
+					BuildMetadata: models.BuildMetadata{
 						Identifiers: []models.BuildIdentifier{
 							newBuildIdentifier("054"),
 						},
@@ -123,7 +123,7 @@ func TestHighest(t *testing.T) {
 						Minor: 1,
 						Patch: 0,
 					},
-					Build: models.BuildMetadata{
+					BuildMetadata: models.BuildMetadata{
 						Identifiers: []models.BuildIdentifier{
 							newBuildIdentifier("100"),
 						},
@@ -135,7 +135,7 @@ func TestHighest(t *testing.T) {
 						Minor: 1,
 						Patch: 0,
 					},
-					Build: models.BuildMetadata{
+					BuildMetadata: models.BuildMetadata{
 						Identifiers: []models.BuildIdentifier{
 							newBuildIdentifier("200"),
 						},
@@ -623,19 +623,19 @@ func TestMajorVersionStream(t *testing.T) {
 
 func TestApplyFilters(t *testing.T) {
 	type args struct {
-		versions []models.Version
+		versions models.VersionSlice
 		filters  []FilterFunc
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    []models.Version
+		want    models.VersionSlice
 		wantErr bool
 	}{
 		{
 			name: "Apply multiple filters",
 			args: args{
-				versions: []models.Version{
+				versions: models.VersionSlice{
 					{
 						Release: models.Release{
 							Major: 1,
@@ -663,7 +663,7 @@ func TestApplyFilters(t *testing.T) {
 					MinorVersionStream(1, 2),
 				},
 			},
-			want: []models.Version{
+			want: models.VersionSlice{
 				{
 					Release: models.Release{
 						Major: 1,
@@ -677,7 +677,7 @@ func TestApplyFilters(t *testing.T) {
 		{
 			name: "No matching version after filters",
 			args: args{
-				versions: []models.Version{
+				versions: models.VersionSlice{
 					{
 						Release: models.Release{
 							Major: 1,
@@ -710,7 +710,7 @@ func TestApplyFilters(t *testing.T) {
 		{
 			name: "Filter returns an error",
 			args: args{
-				versions: []models.Version{
+				versions: models.VersionSlice{
 					{
 						Release: models.Release{
 							Major: 1,
@@ -751,4 +751,92 @@ func alwaysError() FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		return nil, errors.New("Filter error")
 	}
+}
+
+func TestVersionPatternFilter(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  models.VersionPattern
+		versions []models.Version
+		want     []models.Version
+	}{
+		{
+			name:    "Exact match",
+			pattern: newVersionPattern("1.2.3-alpha.beta"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("2.3.4-alpha.beta"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+			},
+		},
+		{
+			name:    "Patch wildcard match",
+			pattern: newVersionPattern("1.2.*-alpha.beta"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.4-alpha.beta"),
+				newVersion("2.3.4-alpha.beta"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.4-alpha.beta"),
+			},
+		},
+		{
+			name:    "Prerelease wildcard match",
+			pattern: newVersionPattern("1.2.3-alpha.*"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha.gamma"),
+				newVersion("2.3.4-alpha.beta"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha.gamma"),
+			},
+		},
+		{
+			name:    "Build metadata exact match",
+			pattern: newVersionPattern("1.2.3-alpha.beta+20130313144700"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta+20130313144700"),
+				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				newVersion("2.3.4-alpha.beta+20130313144700"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta+20130313144700"),
+			},
+		},
+		{
+			name:    "Invalid pattern error",
+			pattern: newVersionPattern("1.2.3-alpha..beta"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha.gamma"),
+				newVersion("2.3.4-alpha.beta"),
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filter := VersionPatternFilterWithWildcard(tt.pattern)
+			got, err := filter(tt.versions)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func newVersion(s string) models.Version {
+	v, _ := models.ParseVersion(s)
+	return v
+}
+
+func newVersionPattern(s string) models.VersionPattern {
+	v, _ := models.ParseVersionPattern(s)
+	return v
 }

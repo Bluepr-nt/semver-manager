@@ -31,7 +31,7 @@ func NewFetchCommand() *cobra.Command {
 		},
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := utils.SanitizeInputs(config); err != nil {
+			if err := utils.SanitizeInputs(); err != nil {
 				klog.Errorf("CLI argument error: %w", err)
 				panic(config)
 			}
