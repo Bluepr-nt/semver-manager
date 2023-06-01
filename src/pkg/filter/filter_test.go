@@ -798,6 +798,21 @@ func TestVersionPatternFilter(t *testing.T) {
 			},
 		},
 		{
+			name:    "Multiple wildcard match",
+			pattern: newVersionPattern("*.*.*-alpha.*"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha.gamma"),
+				newVersion("2.3.4-alpha.beta"),
+				newVersion("2.3.4-no-match.beta"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha.gamma"),
+				newVersion("2.3.4-alpha.beta"),
+			},
+		},
+		{
 			name:    "Build metadata exact match",
 			pattern: newVersionPattern("1.2.3-alpha.beta+20130313144700"),
 			versions: []models.Version{
@@ -807,6 +822,20 @@ func TestVersionPatternFilter(t *testing.T) {
 			},
 			want: []models.Version{
 				newVersion("1.2.3-alpha.beta+20130313144700"),
+			},
+		},
+		{
+			name:    "Build metadata empty",
+			pattern: newVersionPattern("*.*.*-alpha.beta"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta+20130313144700"),
+				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				newVersion("2.3.4-alpha.beta+20130313144700"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta+20130313144700"),
+				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				newVersion("2.3.4-alpha.beta+20130313144700"),
 			},
 		},
 		{
