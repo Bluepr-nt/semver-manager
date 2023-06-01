@@ -8,36 +8,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type FilterArgs struct {
-	VersionStream string
-	Filters       []string
-	StreamFilter  string // Major, Minor, Patch, Release, Pre-release
-	Highest       string
-}
-
 func NewFilterCommand() *cobra.Command {
-	config := &FilterArgs{}
+	filterArgs := &FilterArgs{}
 	var filterCmd = &cobra.Command{
 		Use:   "filter",
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// args contains the command-line arguments
 			fmt.Println("Command-line arguments:", args)
-
-			// Assuming args contain the versions and you have a ParseVersion function to parse the string to a version.
-			// Make sure to handle the error from ParseVersion properly.
-			versions := make([]models.Version, len(args))
-			for i, versionStr := range args {
-				versions[i], _ = models.ParseVersion(versionStr)
+			versions := []models.Version{}
+			var err error
+			for i, versionStr := range filterArgs.Versions {
+				versions[i], err = models.ParseVersion(versionStr)
+				if err != nil {
+					panic(err)
+				}
 			}
 
-			filter.ApplyFilters(versions)
-			// ... Rest of your filter command implementation ...
+			filters := []filter.FilterFunc{}
+			if filterArgs.StreamFilter != "" {
+				filters = append(filters, filter.StreamFilter(filterArgs.StreamFilter))
+				filter.ApplyFilters(versions)
+				// ... Rest of your filter command implementation ...
+			}
 		},
 	}
-	filterCmd.Flags().StringVarP(&config.StreamFilter, "stream", "s", "", "Filter by major, minor, or patch version stream")
-	filterCmd.Flags().StringVarP(&config.Highest, "highest", "H", "", "Filter by highest version")
-
+	filterCmd.Flags().StringArrayVarP(&filterArgs.Versions, "versions", "v", []string{}, "Version list to filter")
+	filterCmd.MarkFlagRequired("versions")
+	filterCmd.Flags().StringVarP(&filterArgs.StreamFilter, "stream", "s", "", "Filter by major, minor, patch, prerelease version and build metadata streams")
+	filterCmd.Flags().BoolVarP(&filterArgs.Highest, "highest", "H", false, "Filter by highest version")
 	return filterCmd
 }

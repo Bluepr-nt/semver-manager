@@ -3,7 +3,6 @@ package fetchcmd
 import (
 	"fmt"
 	"log"
-	"src/pkg/fetch/models"
 	"src/pkg/fetch/pkg/fetch"
 	"src/pkg/fetch/pkg/filter"
 	"src/pkg/fetch/util"
@@ -38,18 +37,18 @@ var fetchCmd = &cobra.Command{
 
 		filters := []filter.FilterFunc{}
 
-		if cmd.Flags().Changed("major") {
-			filters = append(filters, filter.MajorVersionStream(major))
-		}
-		if cmd.Flags().Changed("minor") {
-			filters = append(filters, filter.MinorVersionStream(major, minor))
-		}
-		if cmd.Flags().Changed("patch") {
-			filters = append(filters, filter.PatchVersionStream(major, minor, patch))
-		}
-		if cmd.Flags().Changed("prerelease") {
-			filters = append(filters, filter.PreReleaseVersionStream(models.Release{}, models.PRVersion{}))
-		}
+		// if cmd.Flags().Changed("major") {
+		// 	filters = append(filters, filter.MajorVersionStream(major))
+		// }
+		// if cmd.Flags().Changed("minor") {
+		// 	filters = append(filters, filter.MinorVersionStream(major, minor))
+		// }
+		// if cmd.Flags().Changed("patch") {
+		// 	filters = append(filters, filter.PatchVersionStream(major, minor, patch))
+		// }
+		// if cmd.Flags().Changed("prerelease") {
+		// 	filters = append(filters, filter.PreReleaseVersionStream(models.Release{}, models.PRVersion{}))
+		// }
 		if releaseOnly {
 			filters = append(filters, filter.ReleaseOnly())
 		}

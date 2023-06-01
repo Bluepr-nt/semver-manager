@@ -177,448 +177,9 @@ func newBuildIdentifier(v string) models.BuildIdentifier {
 	return i
 }
 
-func TestReleaseOnly(t *testing.T) {
-	tests := []struct {
-		name     string
-		versions []models.Version
-		want     []models.Version
-		wantErr  bool
-	}{
-		{
-			name: "Mixed release and prerelease versions",
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 0,
-						Patch: 0,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 0,
-						Patch: 1,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("alpha"),
-						},
-					},
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 0,
-						Patch: 0,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Only release versions",
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 2,
-						Patch: 0,
-					},
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 2,
-						Patch: 0,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:     "No versions",
-			versions: []models.Version{},
-			want:     nil,
-			wantErr:  false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ReleaseOnly()(tt.versions)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ReleaseOnly() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestPreReleaseVersionStream(t *testing.T) {
-	type args struct {
-		release    models.Release
-		prerelease models.PRVersion
-	}
-	tests := []struct {
-		name     string
-		args     args
-		versions []models.Version
-		want     []models.Version
-		wantErr  bool
-	}{
-		{
-			name: "Matching prerelease versions",
-			args: args{
-				release: models.Release{
-					Major: 1,
-					Minor: 2,
-					Patch: 3,
-				},
-				prerelease: newPRVersion([]string{"alpha", "beta"}),
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-					Prerelease: newPRVersion([]string{"alpha", "beta"}),
-				},
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-					Prerelease: newPRVersion([]string{"alpha"}),
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-					Prerelease: newPRVersion([]string{"alpha", "beta"}),
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "No matching prerelease versions",
-			args: args{
-				release: models.Release{
-					Major: 1,
-					Minor: 2,
-					Patch: 3,
-				},
-				prerelease: newPRVersion([]string{"alpha", "beta"}),
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-					Prerelease: newPRVersion([]string{"gamma"}),
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-		{
-			name: "No matching prerelease versions with same amount of identifiers",
-			args: args{
-				release: models.Release{
-					Major: 1,
-					Minor: 2,
-					Patch: 3,
-				},
-				prerelease: newPRVersion([]string{"alpha", "beta"}),
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-					Prerelease: newPRVersion([]string{"gamma", "alpha"}),
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			filter := PreReleaseVersionStream(tt.args.release, tt.args.prerelease)
-			got, err := filter(tt.versions)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PreReleaseVersionStream() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func newPRVersion(identifiers []string) (p models.PRVersion) {
 	p, _ = models.ParsePRVersion(identifiers)
 	return
-}
-
-func TestPatchVersionStream(t *testing.T) {
-	type args struct {
-		major uint64
-		minor uint64
-		patch uint64
-	}
-	tests := []struct {
-		name     string
-		args     args
-		versions []models.Version
-		want     []models.Version
-		wantErr  bool
-	}{
-		{
-			name: "Matching patch versions",
-			args: args{
-				major: 1,
-				minor: 2,
-				patch: 3,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 4,
-					},
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "No matching patch versions",
-			args: args{
-				major: 1,
-				minor: 2,
-				patch: 3,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 4,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			filter := PatchVersionStream(tt.args.major, tt.args.minor, tt.args.patch)
-			got, err := filter(tt.versions)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PatchVersionStream() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestMinorVersionStream(t *testing.T) {
-	type args struct {
-		major uint64
-		minor uint64
-	}
-	tests := []struct {
-		name     string
-		args     args
-		versions []models.Version
-		want     []models.Version
-		wantErr  bool
-	}{
-		{
-			name: "Matching minor versions",
-			args: args{
-				major: 1,
-				minor: 2,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 3,
-						Patch: 4,
-					},
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "No matching minor versions",
-			args: args{
-				major: 1,
-				minor: 2,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 3,
-						Patch: 4,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			filter := MinorVersionStream(tt.args.major, tt.args.minor)
-			got, err := filter(tt.versions)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("MinorVersionStream() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestMajorVersionStream(t *testing.T) {
-	type args struct {
-		major uint64
-	}
-	tests := []struct {
-		name     string
-		args     args
-		versions []models.Version
-		want     []models.Version
-		wantErr  bool
-	}{
-		{
-			name: "Matching major versions",
-			args: args{
-				major: 1,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 2,
-						Minor: 3,
-						Patch: 4,
-					},
-				},
-			},
-			want: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 3,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "No matching major versions",
-			args: args{
-				major: 1,
-			},
-			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 2,
-						Minor: 3,
-						Patch: 4,
-					},
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			filter := MajorVersionStream(tt.args.major)
-			got, err := filter(tt.versions)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("MajorVersionStream() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
 }
 
 func TestApplyFilters(t *testing.T) {
@@ -646,7 +207,7 @@ func TestApplyFilters(t *testing.T) {
 					{
 						Release: models.Release{
 							Major: 1,
-							Minor: 3,
+							Minor: 2,
 							Patch: 4,
 						},
 					},
@@ -659,8 +220,8 @@ func TestApplyFilters(t *testing.T) {
 					},
 				},
 				filters: []FilterFunc{
-					MajorVersionStream(1),
-					MinorVersionStream(1, 2),
+					VersionPatternFilter(newVersionPattern("1.2.*")),
+					Highest(),
 				},
 			},
 			want: models.VersionSlice{
@@ -668,7 +229,7 @@ func TestApplyFilters(t *testing.T) {
 					Release: models.Release{
 						Major: 1,
 						Minor: 2,
-						Patch: 3,
+						Patch: 4,
 					},
 				},
 			},
@@ -701,7 +262,7 @@ func TestApplyFilters(t *testing.T) {
 					},
 				},
 				filters: []FilterFunc{
-					MajorVersionStream(3),
+					VersionPatternFilter(newVersionPattern("4.*.*")),
 				},
 			},
 			want:    nil,
@@ -727,7 +288,7 @@ func TestApplyFilters(t *testing.T) {
 					},
 				},
 				filters: []FilterFunc{
-					MajorVersionStream(1),
+					VersionPatternFilter(newVersionPattern("1.1.1")),
 					alwaysError(),
 				},
 			},
@@ -852,7 +413,7 @@ func TestVersionPatternFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filter := VersionPatternFilterWithWildcard(tt.pattern)
+			filter := VersionPatternFilter(tt.pattern)
 			got, err := filter(tt.versions)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)

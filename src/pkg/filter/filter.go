@@ -58,65 +58,6 @@ func Highest() FilterFunc {
 	}
 }
 
-func MajorVersionStream(major uint64) FilterFunc {
-	return func(versions []models.Version) ([]models.Version, error) {
-		var filtered []models.Version
-
-		for _, version := range versions {
-			if version.Release.Major == major {
-				filtered = append(filtered, version)
-			}
-		}
-
-		return filtered, nil
-	}
-}
-
-func MinorVersionStream(major, minor uint64) FilterFunc {
-	return func(versions []models.Version) ([]models.Version, error) {
-		var filtered []models.Version
-
-		for _, version := range versions {
-			if version.Release.Major == major && version.Release.Minor == minor {
-				filtered = append(filtered, version)
-			}
-		}
-
-		return filtered, nil
-	}
-}
-
-func PatchVersionStream(major, minor, patch uint64) FilterFunc {
-	return func(versions []models.Version) ([]models.Version, error) {
-		var filtered []models.Version
-
-		for _, version := range versions {
-			if version.Release.Major == major && version.Release.Minor == minor && version.Release.Patch == patch {
-				filtered = append(filtered, version)
-			}
-		}
-
-		return filtered, nil
-	}
-}
-
-func PreReleaseVersionStream(release models.Release, prerelease models.PRVersion) FilterFunc {
-	return func(versions []models.Version) ([]models.Version, error) {
-		var filtered []models.Version
-
-		for _, version := range versions {
-			if version.Release == release {
-				matchingPreRelease := matchPreRelease(version.Prerelease, prerelease)
-				if matchingPreRelease {
-					filtered = append(filtered, version)
-				}
-			}
-		}
-
-		return filtered, nil
-	}
-}
-
 func matchPreRelease(prVersion models.PRVersion, prerelease models.PRVersion) bool {
 	if len(prVersion.Identifiers) < len(prerelease.Identifiers) {
 		return false
@@ -152,37 +93,7 @@ func toUint(s string) uint64 {
 	return v
 }
 
-// create filter function where * is a wildcard for major, minor, patch and prerelease identifiers and exclude prerelease versions if no prerelease identifiers are specified or * inplace of prerelease identifiers
-// func VersionPatternFilterWithWildcard(pattern models.VersionPattern) FilterFunc {
-// 	return func(versions []models.Version) ([]models.Version, error) {
-// 		var filtered []models.Version
-
-// 		for _, version := range versions {
-// 			if pattern.Release.Major.Value() != "*" && version.Release.Major != toUint(pattern.Release.Major.Value()) {
-// 				continue
-// 			}
-// 			if pattern.Release.Minor.Value() != "*" && version.Release.Minor != toUint(pattern.Release.Minor.Value()) {
-// 				continue
-// 			}
-// 			if pattern.Release.Patch.Value() != "*" && version.Release.Patch != toUint(pattern.Release.Patch.Value()) {
-// 				continue
-// 			}
-// 			if len(pattern.Prerelease.Identifiers) == 0 && len(version.Prerelease.Identifiers) > 0 {
-// 				// If no prerelease data in pattern, exclude versions that have prerelease identifiers
-// 				continue
-// 			}
-// 			if len(pattern.Prerelease.Identifiers) > 0 && !matchPrerelease(pattern.Prerelease.Identifiers, version.Prerelease) {
-// 				continue
-// 			}
-
-// 			filtered = append(filtered, version)
-// 		}
-
-// 		return filtered, nil
-// 	}
-// }
-
-func VersionPatternFilterWithWildcard(pattern models.VersionPattern) FilterFunc {
+func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
 
