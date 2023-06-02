@@ -3,9 +3,9 @@ package fetchcmd
 import (
 	"fmt"
 	"log"
-	"src/pkg/fetch/pkg/fetch"
-	"src/pkg/fetch/pkg/filter"
-	"src/pkg/fetch/util"
+	"src/cmd/smgr/pkg/fetch"
+	"src/cmd/smgr/pkg/filter"
+	"src/cmd/smgr/util"
 
 	"github.com/spf13/cobra"
 )

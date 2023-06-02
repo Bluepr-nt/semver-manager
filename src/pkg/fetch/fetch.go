@@ -3,11 +3,11 @@ package fetch
 import (
 	"errors"
 
-	"src/pkg/fetch/datasource/github"
-	"src/pkg/fetch/datasource/gitlab"
-	"src/pkg/fetch/datasource/oci"
-	"src/pkg/fetch/models"
-	"src/pkg/fetch/util"
+	"src/cmd/smgr/datasource/github"
+	"src/cmd/smgr/datasource/gitlab"
+	"src/cmd/smgr/datasource/oci"
+	"src/cmd/smgr/models"
+	"src/cmd/smgr/util"
 )
 
 type Fetcher interface {

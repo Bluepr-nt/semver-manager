@@ -2,7 +2,7 @@ package filter
 
 import (
 	"errors"
-	"src/pkg/fetch/models"
+	"src/cmd/smgr/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

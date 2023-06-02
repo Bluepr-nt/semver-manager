@@ -2,7 +2,7 @@ package filter
 
 import (
 	"fmt"
-	"src/pkg/fetch/models"
+	"src/cmd/smgr/models"
 	"strconv"
 
 	"github.com/blang/semver/v4"

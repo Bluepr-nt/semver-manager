@@ -2,8 +2,8 @@ package filtercmd
 
 import (
 	"fmt"
-	"src/pkg/fetch/models"
-	"src/pkg/fetch/pkg/filter"
+	"src/cmd/smgr/models"
+	"src/cmd/smgr/pkg/filter"
 
 	"github.com/spf13/cobra"
 )
@@ -26,11 +26,20 @@ func NewFilterCommand() *cobra.Command {
 			}
 
 			filters := []filter.FilterFunc{}
+
 			if filterArgs.StreamFilter != "" {
-				filters = append(filters, filter.StreamFilter(filterArgs.StreamFilter))
-				filter.ApplyFilters(versions)
-				// ... Rest of your filter command implementation ...
+				pattern, err := models.ParseVersionPattern(filterArgs.StreamFilter)
+				if err != nil {
+					panic(err)
+				}
+				filters = append(filters, filter.VersionPatternFilter(pattern))
 			}
+
+			if filterArgs.Highest {
+				filters = append(filters, filter.Highest())
+			}
+
+			filter.ApplyFilters(versions, filters...)
 		},
 	}
 	filterCmd.Flags().StringArrayVarP(&filterArgs.Versions, "versions", "v", []string{}, "Version list to filter")

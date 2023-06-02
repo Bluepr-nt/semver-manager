@@ -1,8 +1,8 @@
 package github
 
 import (
-	"src/pkg/fetch/models"
-	"src/pkg/fetch/util"
+	"src/cmd/smgr/models"
+	"src/cmd/smgr/util"
 )
 
 type GithubClient struct {

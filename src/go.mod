@@ -1,4 +1,4 @@
-module src/pkg/fetch
+module src/cmd/smgr
 
 go 1.20
 
