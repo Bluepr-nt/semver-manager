@@ -3,8 +3,8 @@ package fetch
 import (
 	"strings"
 
-	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
-	smvr "github.com/13013SwagR/semver-manager/smgr/pkg/semverSvc"
+	"github.com/13013SwagR/semver-manager/src/internal/utils"
+	smvr "github.com/13013SwagR/semver-manager/src/pkg/semverSvc"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )

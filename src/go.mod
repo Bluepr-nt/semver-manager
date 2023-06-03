@@ -1,4 +1,4 @@
-module github.com/13013SwagR/semver-manager/src/cmd/smgr
+module github.com/13013SwagR/semver-manager/src
 
 go 1.20
 

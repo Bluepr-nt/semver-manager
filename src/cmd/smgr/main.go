@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	fetch "github.com/13013SwagR/semver-manager/smgr/cmd/fetch"
-	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
+	fetch "github.com/13013SwagR/semver-manager/src/cmd/fetch"
+	"github.com/13013SwagR/semver-manager/src/internal/utils"
 	"k8s.io/klog/v2"
 )
 
