@@ -3,10 +3,10 @@ package fetch
 import (
 	"strings"
 
-	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
-	smvr "github.com/13013SwagR/semver-manager/smgr/pkg/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
+	"src/cmd/smgr/internal/utils"
+	smvr "src/cmd/smgr/pkg/semver"
 )
 
 type config struct {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	fetch "github.com/13013SwagR/semver-manager/smgr/cmd/fetch"
-	"github.com/13013SwagR/semver-manager/smgr/internal/utils"
 	"k8s.io/klog/v2"
+	fetch "smgr/cmd/fetch"
+	"src/cmd/smgr/internal/utils"
 )
 
 type fetchFlags struct {

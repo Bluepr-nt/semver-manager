@@ -1,7 +1,6 @@
 package filtercmd
 
 import (
-	"fmt"
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/pkg/filter"
 
@@ -14,9 +13,9 @@ func NewFilterCommand() *cobra.Command {
 		Use:   "filter",
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Command-line arguments:", args)
-			versions := []models.Version{}
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			versions := make([]models.Version, len(filterArgs.Versions))
 			var err error
 			for i, versionStr := range filterArgs.Versions {
 				versions[i], err = models.ParseVersion(versionStr)
@@ -39,7 +38,12 @@ func NewFilterCommand() *cobra.Command {
 				filters = append(filters, filter.Highest())
 			}
 
-			filter.ApplyFilters(versions, filters...)
+			semverTags, err := filter.ApplyFilters(versions, filters...)
+			if err != nil {
+				return err
+			}
+			cmd.Println(semverTags.String())
+			return nil
 		},
 	}
 	filterCmd.Flags().StringArrayVarP(&filterArgs.Versions, "versions", "v", []string{}, "Version list to filter")

@@ -26,7 +26,7 @@ func TestNewFilterCommand(t *testing.T) {
 		{
 			name:        "Provided version",
 			inputArgs:   []string{"--versions", "1.2.3", "--highest"},
-			expectedOut: "Command-line arguments: []\n",
+			expectedOut: "1.2.3",
 		},
 		// ... More test cases ...
 	}
@@ -40,9 +40,9 @@ func TestNewFilterCommand(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+				assert.NoError(t, err)
 			}
 
-			assert.NoError(t, err)
 			assert.Equal(t, test.expectedOut, output)
 		})
 	}
