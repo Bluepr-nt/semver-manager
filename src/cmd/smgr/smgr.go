@@ -15,7 +15,7 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "smgr",
 		Short: "Manage Semantic Versioning compliant versions.",
-		Long:  `Manage Semantic Versioning compliant versions and integrate with popular or registry platform to facilitate the task.`,
+		Long:  `Manage Semantic Versioning compliant versions and integrate with popular repository and registry platform to facilitate the task.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 
 			viper.SetConfigName("ccs")
