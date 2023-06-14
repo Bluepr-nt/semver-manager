@@ -49,9 +49,6 @@ var fetchCmd = &cobra.Command{
 		// if cmd.Flags().Changed("prerelease") {
 		// 	filters = append(filters, filter.PreReleaseVersionStream(models.Release{}, models.PRVersion{}))
 		// }
-		if releaseOnly {
-			filters = append(filters, filter.ReleaseOnly())
-		}
 		if highest {
 			filters = append(filters, filter.Highest())
 		}
@@ -66,11 +63,5 @@ var fetchCmd = &cobra.Command{
 }
 
 func init() {
-
-	fetchCmd.Flags().Uint64Var(&major, "major", 0, "Filter by major version")
-	fetchCmd.Flags().Uint64Var(&minor, "minor", 0, "Filter by minor version")
-	fetchCmd.Flags().Uint64Var(&patch, "patch", 0, "Filter by patch version")
-	fetchCmd.Flags().StringArrayVar(&prerelease, "prerelease", nil, "Filter by prerelease identifiers")
-	fetchCmd.Flags().BoolVar(&releaseOnly, "releaseOnly", false, "Filter only release versions")
 	fetchCmd.Flags().BoolVar(&highest, "highest", false, "Select the highest versions")
 }

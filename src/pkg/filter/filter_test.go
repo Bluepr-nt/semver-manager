@@ -409,6 +409,17 @@ func TestVersionPatternFilter(t *testing.T) {
 			},
 			want: nil,
 		},
+		{
+			name:    "Different lengths",
+			pattern: newVersionPattern("1.2.3-alpha.*"),
+			versions: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-alpha"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3-alpha.beta"),
+			},
+		},
 	}
 
 	for _, tt := range tests {

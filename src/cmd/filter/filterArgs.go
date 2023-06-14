@@ -1,4 +1,4 @@
-package filtercmd
+package filter
 
 type FilterArgs struct {
 	StreamFilter string

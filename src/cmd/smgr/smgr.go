@@ -1,40 +1,52 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"k8s.io/klog/v2"
 
-	filtercmd "src/cmd/smgr/cmd/filter"
+	"src/cmd/smgr/cmd/filter"
+	"src/cmd/smgr/cmd/utils"
 )
 
+type config struct {
+	dryRun bool
+}
+
 func NewRootCommand(output io.Writer) *cobra.Command {
+	config := config{
+		dryRun: false,
+	}
 	cmd := &cobra.Command{
 		Use:   "smgr",
 		Short: "Manage Semantic Versioning compliant versions.",
 		Long:  `Manage Semantic Versioning compliant versions and integrate with popular repository and registry platform to facilitate the task.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-
-			viper.SetConfigName("ccs")
-			viper.AddConfigPath(".")
-			viper.SetEnvPrefix("ccs")
-			viper.AutomaticEnv()
-			if err := viper.ReadInConfig(); err != nil {
-				cmd.Println("Warning reading config file:", err)
-			}
+			utils.InitializeConfig(cmd)
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
 		},
 	}
 
-	filterCmd := filtercmd.NewFilterCommand()
+	cmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
+	cmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
+
+	filterCmd := filter.NewFilterCommand()
 	cmd.AddCommand(filterCmd)
 
 	return cmd
 }
 
 func main() {
+	klog.InitFlags(nil)
+	flag.Set("logtostderr", "false")
+	flag.Set("alsologtostderr", "false")
+	flag.Parse()
 	rootCmd := NewRootCommand(nil)
 	// Execute the root command
 	if err := rootCmd.Execute(); err != nil {

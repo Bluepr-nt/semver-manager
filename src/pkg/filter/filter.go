@@ -24,20 +24,6 @@ func ApplyFilters(versions []models.Version, filters ...FilterFunc) (models.Vers
 	return filtered, nil
 }
 
-func ReleaseOnly() FilterFunc {
-	return func(versions []models.Version) ([]models.Version, error) {
-		var filtered []models.Version
-
-		for _, version := range versions {
-			if len(version.Prerelease.Identifiers) == 0 {
-				filtered = append(filtered, version)
-			}
-		}
-
-		return filtered, nil
-	}
-}
-
 func Highest() FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		if len(versions) == 0 {
@@ -56,20 +42,6 @@ func Highest() FilterFunc {
 
 		return []models.Version{highest}, nil
 	}
-}
-
-func matchPreRelease(prVersion models.PRVersion, prerelease models.PRVersion) bool {
-	if len(prVersion.Identifiers) < len(prerelease.Identifiers) {
-		return false
-	}
-
-	for i, prIdentifier := range prerelease.Identifiers {
-		if prVersion.Identifiers[i].String() != prIdentifier.String() {
-			return false
-		}
-	}
-
-	return true
 }
 
 // matchPrerelease checks if the prerelease identifiers match the pattern.
@@ -129,20 +101,6 @@ func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern,
 
 	for i, buildIdentifierPattern := range buildIdentifiersPattern {
 		if buildIdentifierPattern.Value() != "*" && buildIdentifierPattern.Value() != buildMetadata.Identifiers[i].String() {
-			return false
-		}
-	}
-
-	return true
-}
-
-func matchPrereleaseWithWildcard(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
-	if len(prIdentifiersPattern) > len(prerelease.Identifiers) {
-		return false
-	}
-
-	for i, prIdentifierPattern := range prIdentifiersPattern {
-		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].String() {
 			return false
 		}
 	}
