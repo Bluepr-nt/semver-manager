@@ -21,14 +21,18 @@ func TestNewFilterCommand(t *testing.T) {
 			name:          "Missing required flag",
 			inputArgs:     []string{},
 			expectedError: true,
-			expectedOut:   "Error: required flag(s) \"versions\" not set\nUsage:\n  filter [flags]\n\nFlags:\n  -h, --help                   help for filter\n  -H, --highest                Filter by highest version\n  -s, --stream string          Filter by major, minor, patch, prerelease version and build metadata streams\n  -v, --versions stringArray   Version list to filter",
+			expectedOut:   "Error: required flag(s) \"versions\" not set\nUsage:\n  filter [flags]\n\nFlags:\n  -h, --help              help for filter\n  -H, --highest           Filter by highest version\n  -s, --stream string     Filter by major, minor, patch, prerelease version and build metadata streams\n  -V, --versions string   Version list to filter",
 		},
 		{
 			name:        "Provided version",
 			inputArgs:   []string{"--versions", "1.2.3", "--highest"},
 			expectedOut: "1.2.3",
 		},
-		// ... More test cases ...
+		{
+			name:        "Provided version",
+			inputArgs:   []string{"--versions", "1.2.3, 1.1.1", "--highest"},
+			expectedOut: "1.2.3",
+		},
 	}
 
 	for _, test := range tests {
