@@ -3,7 +3,6 @@ package filter
 import (
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/pkg/filter"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -15,26 +14,11 @@ func NewFilterCommand() *cobra.Command {
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			versionList := []string{}
-			// trim begining and trailing whitespaces in filterArgs.Versions
-			filterArgs.Versions = strings.TrimSpace(filterArgs.Versions)
+			// trim beginning and trailing whitespaces in filterArgs.Versions
 			// if filterArgs contains commas, remove all whitespaces
-			if strings.Contains(filterArgs.Versions, ",") {
-				filterArgs.Versions = strings.ReplaceAll(filterArgs.Versions, " ", "")
-				versionList = strings.Split(filterArgs.Versions, ",")
-			} else {
-				versionList = strings.Split(filterArgs.Versions, " ")
-			}
-
-			filterArgs.Versions = strings.ReplaceAll(filterArgs.Versions, " ", ",")
-
-			versions := make([]models.Version, len(versionList))
-			var err error
-			for i, versionStr := range versionList {
-				versions[i], err = models.ParseVersion(versionStr)
-				if err != nil {
-					return err
-				}
+			versions, err := models.StringToVersionList(filterArgs.Versions)
+			if err != nil {
+				return err
 			}
 
 			filters := []filter.FilterFunc{}

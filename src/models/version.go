@@ -213,6 +213,29 @@ func ParsePRVersion(identifiers []string) (PRVersion, error) {
 	return prVersion, nil
 }
 
+func StringToVersionList(stringVersions string) ([]Version, error) {
+	versionList := []string{}
+
+	stringVersions = strings.TrimSpace(stringVersions)
+
+	if strings.Contains(stringVersions, ",") {
+		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
+		versionList = strings.Split(stringVersions, ",")
+	} else {
+		versionList = strings.Split(stringVersions, " ")
+	}
+
+	versions := make([]Version, len(versionList))
+	var err error
+	for i, versionStr := range versionList {
+		versions[i], err = ParseVersion(versionStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return versions, nil
+}
+
 type BuildMetadata struct {
 	Identifiers []BuildIdentifier
 }
