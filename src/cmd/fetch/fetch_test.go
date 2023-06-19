@@ -2,7 +2,7 @@ package fetchcmd
 
 import (
 	"bytes"
-	"fmt"
+	// "fmt"
 	"os"
 	"testing"
 
@@ -105,11 +105,11 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 			cmd.SetOut(output)
 			cmd.SetErr(output)
 
-			var args []string
+			// var args []string
 			for _, flag := range tc.flags {
 				err := cmd.Flags().Set(flag.name, flag.value)
-				args = append(args, fmt.Sprintf("--%s", flag.name))
-				args = append(args, flag.value)
+				// args = append(args, fmt.Sprintf("--%s", flag.name))
+				// args = append(args, flag.value)
 				if err != nil {
 					t.Fatalf("unexpected error setting flag '%s': %v", flag.name, err)
 				}

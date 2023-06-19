@@ -17,12 +17,7 @@ import (
 )
 
 var (
-	major       uint64
-	minor       uint64
-	patch       uint64
-	prerelease  []string
-	releaseOnly bool
-	highest     bool
+	highest bool
 )
 
 // fetchCmd represents the fetch command
@@ -78,11 +73,11 @@ type config struct {
 	Owner      string `san:"trim"`
 	Platform   string `san:"trim"`
 	dryRun     bool
-	Filters    filterCmd.FilterArgs
 }
 
 func NewFetchCommand() *cobra.Command {
 	config := &config{}
+	filterArgs := filterCmd.FilterArgs{}
 	var fetchCmd = &cobra.Command{
 		Use:   "fetch",
 		Short: "Fetch semver tags from a registry or repository.",
@@ -94,10 +89,6 @@ func NewFetchCommand() *cobra.Command {
 		},
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := utils.SanitizeInputs(&config); err != nil {
-				klog.Errorf("CLI argument error: %w", err)
-				panic(config)
-			}
 
 			dryRun, _ := cmd.PersistentFlags().GetBool("dry-run")
 			config.dryRun = dryRun
@@ -109,8 +100,8 @@ func NewFetchCommand() *cobra.Command {
 	fetchCmd.Flags().StringVarP(&config.Repository, "repo", "r", "", "The repository or registry to fetch the Semver tags from")
 	fetchCmd.Flags().StringVarP(&config.Token, "token", "t", "", "The token to access the repository")
 	fetchCmd.Flags().StringVarP(&config.Platform, "platform", "p", "github", "The platform to fetch the Semver from, options: github")
-	fetchCmd.Flags().BoolVarP(&config.Filters.Highest, "highest", "H", false, "Fetches only the highest Semver tag")
-	fetchCmd.Flags().BoolVarP(&config.Filters.Release, "release", "R", false, "Fetches only Release Semver tag (x.x.x)")
+	fetchCmd.Flags().BoolVarP(&filterArgs.Highest, "highest", "H", false, "Fetches only the highest Semver tag")
+	fetchCmd.Flags().BoolVarP(&filterArgs.Release, "release", "R", false, "Fetches only Release Semver tag (x.x.x)")
 
 	return fetchCmd
 }
@@ -129,7 +120,7 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command) error {
 	return nil
 }
 
-func newDatasource(dryRun bool, platform, token string) datasourceUtils.Semver {
+func newDatasource(dryRun bool, platform, token string) datasourceUtils.Datasource {
 	if len(platform) == 0 {
 		platform = "github"
 	}

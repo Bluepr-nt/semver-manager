@@ -29,7 +29,7 @@ type SemverI interface {
 	FetchSemverTags() ([]string, error)
 }
 
-type Semver struct {
+type Datasource struct {
 	client DatasourceClient
 }
 
@@ -80,19 +80,17 @@ func (ghClient *GithubClient) listTags(owner string, repo string) ([]string, err
 	return tagList, nil
 }
 
-func NewSemverSvc(platform, token string) (svc Semver) {
+func NewSemverSvc(platform, token string) (svc Datasource) {
 	if platform == "github" {
-		newGithubClient(token)
-
-		svc = Semver{client: newGithubClient(token)}
+		svc = Datasource{client: newGithubClient(token)}
 	} else if platform == "dry-run" {
-		svc = Semver{client: &DryDatasourceClient{}}
+		svc = Datasource{client: &DryDatasourceClient{}}
 	}
 
 	return svc
 }
 
-func (s *Semver) FetchSemverTags(owner, repo string) (tagList []string, err error) {
+func (s *Datasource) FetchSemverTags(owner, repo string) (tagList []string, err error) {
 	if s.client == nil {
 		return nil, fmt.Errorf("git platform client is not defined")
 	}
@@ -101,11 +99,14 @@ func (s *Semver) FetchSemverTags(owner, repo string) (tagList []string, err erro
 	if err != nil {
 		return nil, err
 	}
-
-	return tagList, err
+	filteredTags, err := s.FilterSemverTags(tagList, nil)
+	if err != nil {
+		return nil, err
+	}
+	return filteredTags, err
 }
 
-func (s *Semver) FilterHighestSemver(semverList []string) (string, error) {
+func (s *Datasource) FilterHighestSemver(semverList []string) (string, error) {
 	if semverList == nil || len(semverList) < 1 {
 		return "", fmt.Errorf("error the semantic version list is empty")
 	}
@@ -150,7 +151,7 @@ func AreSemver(versions []string) bool {
 	return true
 }
 
-func (s *Semver) FilterSemverTags(tags []string, filters *Filters) ([]string, error) {
+func (s *Datasource) FilterSemverTags(tags []string, filters *Filters) ([]string, error) {
 	var err error
 	filteredTags := removeNonCompliantTags(tags)
 	filteredTags, err = s.SortTags(filteredTags)
@@ -176,7 +177,7 @@ func (s *Semver) FilterSemverTags(tags []string, filters *Filters) ([]string, er
 	return filteredTags, nil
 }
 
-func (s *Semver) FilterSemverRelease(tags []string) ([]string, error) {
+func (s *Datasource) FilterSemverRelease(tags []string) ([]string, error) {
 	var releaseVersions []*semver.Version
 	versions, err := s.stringsToVersions(tags)
 	if err != nil {
@@ -191,7 +192,7 @@ func (s *Semver) FilterSemverRelease(tags []string) ([]string, error) {
 	return releaseTag, nil
 }
 
-func (s *Semver) SortTags(tags []string) ([]string, error) {
+func (s *Datasource) SortTags(tags []string) ([]string, error) {
 	versions, err := s.stringsToVersions(tags)
 	if err != nil {
 		return nil, err
@@ -210,7 +211,7 @@ func removeNonCompliantTags(tags []string) []string {
 	return semverTags
 }
 
-func (s *Semver) versionsToStrings(versions []*semver.Version) []string {
+func (s *Datasource) versionsToStrings(versions []*semver.Version) []string {
 	var tags []string
 	for _, version := range versions {
 		tags = append(tags, version.String())
@@ -218,7 +219,7 @@ func (s *Semver) versionsToStrings(versions []*semver.Version) []string {
 	return tags
 }
 
-func (s *Semver) stringsToVersions(tags []string) ([]*semver.Version, error) {
+func (s *Datasource) stringsToVersions(tags []string) ([]*semver.Version, error) {
 	var semverVersions []*semver.Version
 
 	for _, tag := range tags {
