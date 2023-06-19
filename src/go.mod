@@ -27,9 +27,11 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.100.1
 )

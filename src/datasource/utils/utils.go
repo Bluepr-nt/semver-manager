@@ -1,4 +1,4 @@
-package semver
+package utils
 
 import (
 	"context"
@@ -11,17 +11,17 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type SemverClient interface {
+type DatasourceClient interface {
 	listTags(owner string, repo string) ([]string, error)
 }
 
-type DrySemverClient struct {
+type DryDatasourceClient struct {
 	Username   string
 	Password   string
 	Repository string
 }
 
-func (drySv *DrySemverClient) listTags(owner string, repo string) ([]string, error) {
+func (drySv *DryDatasourceClient) listTags(owner string, repo string) ([]string, error) {
 	return []string{}, nil
 }
 
@@ -30,7 +30,7 @@ type SemverI interface {
 }
 
 type Semver struct {
-	client SemverClient
+	client DatasourceClient
 }
 
 type Filters struct {
@@ -86,25 +86,23 @@ func NewSemverSvc(platform, token string) (svc Semver) {
 
 		svc = Semver{client: newGithubClient(token)}
 	} else if platform == "dry-run" {
-		svc = Semver{client: &DrySemverClient{}}
+		svc = Semver{client: &DryDatasourceClient{}}
 	}
 
 	return svc
 }
 
-func (s *Semver) FetchSemverTags(owner, repo string, filters *Filters) (tagList []string, err error) {
+func (s *Semver) FetchSemverTags(owner, repo string) (tagList []string, err error) {
 	if s.client == nil {
 		return nil, fmt.Errorf("git platform client is not defined")
 	}
 
 	tagList, err = s.client.listTags(owner, repo)
-
 	if err != nil {
 		return nil, err
 	}
 
-	semverTags, err := s.FilterSemverTags(tagList, filters)
-	return semverTags, err
+	return tagList, err
 }
 
 func (s *Semver) FilterHighestSemver(semverList []string) (string, error) {

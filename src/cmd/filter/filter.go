@@ -14,15 +14,12 @@ func NewFilterCommand() *cobra.Command {
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// trim beginning and trailing whitespaces in filterArgs.Versions
-			// if filterArgs contains commas, remove all whitespaces
 			versions, err := models.StringToVersionList(filterArgs.Versions)
 			if err != nil {
 				return err
 			}
 
 			filters := []filter.FilterFunc{}
-
 			if filterArgs.StreamFilter != "" {
 				pattern, err := models.ParseVersionPattern(filterArgs.StreamFilter)
 				if err != nil {
