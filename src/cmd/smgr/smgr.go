@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 
+	"src/cmd/smgr/cmd/fetch"
 	"src/cmd/smgr/cmd/filter"
 	"src/cmd/smgr/cmd/utils"
 )
@@ -35,7 +36,8 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 
 	cmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
 	cmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
-	cmd.AddCommand(filter.NewFilterCommand())
+	filterCmd := filter.NewFilterCommand()
+	cmd.AddCommand(filterCmd, fetch.NewFetchCommand(filterCmd))
 
 	return cmd
 }

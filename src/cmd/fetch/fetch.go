@@ -1,71 +1,61 @@
-package fetchcmd
+package fetch
 
 import (
-	"fmt"
-	"log"
-	filterCmd "src/cmd/smgr/cmd/filter"
 	"src/cmd/smgr/cmd/utils"
 	datasourceUtils "src/cmd/smgr/datasource/utils"
 
-	"src/cmd/smgr/pkg/fetch"
-	"src/cmd/smgr/pkg/filter"
-	"src/cmd/smgr/util"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 )
 
-var (
-	highest bool
-)
-
 // fetchCmd represents the fetch command
-var fetchCmd = &cobra.Command{
-	Use:   "fetch",
-	Short: "Fetch is a CLI tool for fetching versions",
-	Long:  `Fetch is a CLI tool for fetching versions from some source.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Fetching versions...")
-		fetcher, err := fetch.NewFetcher(&util.DatasourceConfig{})
-		if err != nil {
-			return err
-		}
-		versions, err := fetcher.FetchTags()
-		if err != nil {
-			log.Fatal(err)
-		}
+// var fetchCmd = &cobra.Command{
+// 	Use:   "fetch",
+// 	Short: "Fetch is a CLI tool for fetching versions",
+// 	Long:  `Fetch is a CLI tool for fetching versions from some source.`,
+// 	RunE: func(cmd *cobra.Command, args []string) error {
+// 		fmt.Println("Fetching versions...")
+// 		fetcher, err := fetch.NewFetcher(&util.DatasourceConfig{})
+// 		if err != nil {
+// 			return err
+// 		}
+// 		versions, err := fetcher.FetchTags()
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
 
-		filters := []filter.FilterFunc{}
+// 		filters := []filter.FilterFunc{}
 
-		// if cmd.Flags().Changed("major") {
-		// 	filters = append(filters, filter.MajorVersionStream(major))
-		// }
-		// if cmd.Flags().Changed("minor") {
-		// 	filters = append(filters, filter.MinorVersionStream(major, minor))
-		// }
-		// if cmd.Flags().Changed("patch") {
-		// 	filters = append(filters, filter.PatchVersionStream(major, minor, patch))
-		// }
-		// if cmd.Flags().Changed("prerelease") {
-		// 	filters = append(filters, filter.PreReleaseVersionStream(models.Release{}, models.PRVersion{}))
-		// }
-		if highest {
-			filters = append(filters, filter.Highest())
-		}
+// if cmd.Flags().Changed("major") {
+// 	filters = append(filters, filter.MajorVersionStream(major))
+// }
+// if cmd.Flags().Changed("minor") {
+// 	filters = append(filters, filter.MinorVersionStream(major, minor))
+// }
+// if cmd.Flags().Changed("patch") {
+// 	filters = append(filters, filter.PatchVersionStream(major, minor, patch))
+// }
+// if cmd.Flags().Changed("prerelease") {
+// 	filters = append(filters, filter.PreReleaseVersionStream(models.Release{}, models.PRVersion{}))
+// }
+// 		if highest {
+// 			filters = append(filters, filter.Highest())
+// 		}
 
-		filteredVersions, err := filter.ApplyFilters(versions, filters...)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cmd.OutOrStdout().Write([]byte(filteredVersions.String()))
-		return nil
-	},
-}
+// 		filteredVersions, err := filter.ApplyFilters(versions, filters...)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 		cmd.OutOrStdout().Write([]byte(filteredVersions.String()))
+// 		return nil
+// 	},
+// }
 
-func init() {
-	fetchCmd.Flags().BoolVar(&highest, "highest", false, "Select the highest versions")
-}
+// func init() {
+// 	fetchCmd.Flags().BoolVar(&highest, "highest", false, "Select the highest versions")
+// }
 
 type config struct {
 	Token      string `san:"trim"`
@@ -75,9 +65,8 @@ type config struct {
 	dryRun     bool
 }
 
-func NewFetchCommand() *cobra.Command {
+func NewFetchCommand(filterCmd *cobra.Command) *cobra.Command {
 	config := &config{}
-	filterArgs := filterCmd.FilterArgs{}
 	var fetchCmd = &cobra.Command{
 		Use:   "fetch",
 		Short: "Fetch semver tags from a registry or repository.",
@@ -89,24 +78,23 @@ func NewFetchCommand() *cobra.Command {
 		},
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			dryRun, _ := cmd.PersistentFlags().GetBool("dry-run")
 			config.dryRun = dryRun
 
-			return RunFetchSemverTags(config, cmd)
+			return RunFetchSemverTags(config, cmd, filterCmd)
 		},
 	}
 	fetchCmd.Flags().StringVarP(&config.Owner, "owner", "o", "", "The owner of the registry or repository")
 	fetchCmd.Flags().StringVarP(&config.Repository, "repo", "r", "", "The repository or registry to fetch the Semver tags from")
 	fetchCmd.Flags().StringVarP(&config.Token, "token", "t", "", "The token to access the repository")
 	fetchCmd.Flags().StringVarP(&config.Platform, "platform", "p", "github", "The platform to fetch the Semver from, options: github")
-	fetchCmd.Flags().BoolVarP(&filterArgs.Highest, "highest", "H", false, "Fetches only the highest Semver tag")
-	fetchCmd.Flags().BoolVarP(&filterArgs.Release, "release", "R", false, "Fetches only Release Semver tag (x.x.x)")
-
+	if filterCmd != nil {
+		fetchCmd.Flags().AddFlagSet(filterCmd.Flags())
+	}
 	return fetchCmd
 }
 
-func RunFetchSemverTags(config *config, cmd *cobra.Command) error {
+func RunFetchSemverTags(config *config, cmd *cobra.Command, filterCmd *cobra.Command) error {
 
 	datasource := newDatasource(config.dryRun, config.Platform, config.Token)
 
@@ -116,7 +104,21 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.Println(strings.Join(semverTags, " "))
+	if filterCmd != nil {
+		klog.V(1).Info("Filtering tags...")
+		err = filterCmd.Flags().Set("versions", strings.Join(semverTags, " "))
+		if err != nil {
+			return err
+		}
+
+		err = filterCmd.Execute()
+		if err != nil {
+			return err
+		}
+	} else {
+		cmd.Println(strings.Join(semverTags, " "))
+	}
+
 	return nil
 }
 

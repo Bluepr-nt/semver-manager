@@ -69,7 +69,7 @@ func (vs VersionSlice) String() string {
 	for i, version := range vs {
 		builder.WriteString(version.String())
 		if i < len(vs)-1 {
-			builder.WriteString(", ")
+			builder.WriteString(" ")
 		}
 	}
 
@@ -213,21 +213,12 @@ func ParsePRVersion(identifiers []string) (PRVersion, error) {
 	return prVersion, nil
 }
 
-func StringToVersionList(stringVersions string) ([]Version, error) {
-	versionList := []string{}
+func StringToVersions(stringVersions string) ([]Version, error) {
+	versionStringSlice := SplitVersions(stringVersions)
 
-	stringVersions = strings.TrimSpace(stringVersions)
-
-	if strings.Contains(stringVersions, ",") {
-		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
-		versionList = strings.Split(stringVersions, ",")
-	} else {
-		versionList = strings.Split(stringVersions, " ")
-	}
-
-	versions := make([]Version, len(versionList))
+	versions := make([]Version, len(versionStringSlice))
 	var err error
-	for i, versionStr := range versionList {
+	for i, versionStr := range versionStringSlice {
 		versions[i], err = ParseVersion(versionStr)
 		if err != nil {
 			return nil, err
@@ -350,4 +341,17 @@ func versionDigitsCompliance(version, increment string) error {
 	}
 
 	return nil
+}
+
+func SplitVersions(stringVersions string) []string {
+	stringVersions = strings.TrimSpace(stringVersions)
+
+	versionStringSlice := []string{}
+	if strings.Contains(stringVersions, ",") {
+		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
+		versionStringSlice = strings.Split(stringVersions, ",")
+	} else {
+		versionStringSlice = strings.Split(stringVersions, " ")
+	}
+	return versionStringSlice
 }

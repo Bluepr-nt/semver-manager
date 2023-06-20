@@ -81,6 +81,8 @@ func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 			}
 			if len(pattern.Prerelease.Identifiers) > 0 && !matchPrerelease(pattern.Prerelease.Identifiers, version.Prerelease) {
 				continue
+			} else if len(pattern.Prerelease.Identifiers) == 0 && len(version.Prerelease.Identifiers) > 0 {
+				continue
 			}
 			// Checking build metadata
 			if len(pattern.Build.Identifiers) > 0 && !matchBuildMetadata(pattern.Build.Identifiers, version.BuildMetadata) {
@@ -106,4 +108,15 @@ func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern,
 	}
 
 	return true
+}
+
+func GetVersions(stringVersions string) []models.Version {
+	var versions []models.Version
+
+	for _, stringVersion := range models.SplitVersions(stringVersions) {
+		version, _ := models.ParseVersion(stringVersion)
+		versions = append(versions, version)
+	}
+
+	return versions
 }

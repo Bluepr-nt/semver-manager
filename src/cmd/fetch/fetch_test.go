@@ -1,7 +1,9 @@
-package fetchcmd
+package fetch
 
 import (
 	"bytes"
+	"src/cmd/smgr/cmd/filter"
+
 	// "fmt"
 	"os"
 	"testing"
@@ -25,21 +27,21 @@ func LoadEnvFromFile() error {
 
 func TestNewFetchCommand(t *testing.T) {
 	t.Run("Returns non-nil command", func(t *testing.T) {
-		cmd := NewFetchCommand()
+		cmd := NewFetchCommand(nil)
 		if cmd == nil {
 			t.Error("NewFetchCommand returned nil command.")
 		}
 	})
 
 	t.Run("Command name is 'fetch'", func(t *testing.T) {
-		cmd := NewFetchCommand()
+		cmd := NewFetchCommand(nil)
 		if cmd.Name() != "fetch" {
 			t.Errorf("Command name is '%s', expected 'fetch'", cmd.Name())
 		}
 	})
 
 	t.Run("Command has expected flags", func(t *testing.T) {
-		cmd := NewFetchCommand()
+		cmd := NewFetchCommand(filter.NewFilterCommand())
 		flags := cmd.Flags()
 		expectedFlags := []string{"owner", "repo", "token", "platform", "highest"}
 		for _, expectedFlag := range expectedFlags {
@@ -91,7 +93,7 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 				{"token", os.Getenv("TOKEN")},
 				{"platform", "github"},
 				{"highest", "false"},
-				{"release", "true"},
+				{"stream", "*.*.*"},
 			},
 			expectedTags: "0.0.4 1.0.0 1.0.0+0.build.1-rc.10000aaa-kk-0.1 1.1.2+meta 1.1.2+meta-valid 1.1.7 1.2.3 2.0.0+build.1848 2.0.0 10.20.30\n",
 		},
@@ -99,9 +101,12 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := NewFetchCommand()
-
 			output := new(bytes.Buffer)
+			filterCmd := filter.NewFilterCommand()
+			filterCmd.SetOut(output)
+			filterCmd.SetErr(output)
+			cmd := NewFetchCommand(filterCmd)
+
 			cmd.SetOut(output)
 			cmd.SetErr(output)
 

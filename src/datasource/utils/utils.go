@@ -103,6 +103,8 @@ func (s *Datasource) FetchSemverTags(owner, repo string) (tagList []string, err 
 	if err != nil {
 		return nil, err
 	}
+
+	filteredTags, err = s.SortTags(filteredTags)
 	return filteredTags, err
 }
 

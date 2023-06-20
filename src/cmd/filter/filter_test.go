@@ -17,20 +17,25 @@ func TestNewFilterCommand(t *testing.T) {
 		expectedError bool
 		expectedOut   string
 	}{
+		// {
+		// 	name:          "Missing required flag",
+		// 	inputArgs:     []string{},
+		// 	expectedError: true,
+		// 	expectedOut:   "Error: required flag(s) \"versions\" not set\nUsage:\n  filter [flags]\n\nFlags:\n  -h, --help              help for filter\n  -H, --highest           Filter by highest version\n  -s, --stream string     Filter by major, minor, patch, prerelease version and build metadata streams\n  -V, --versions string   Version list to filter",
+		// },
 		{
-			name:          "Missing required flag",
-			inputArgs:     []string{},
-			expectedError: true,
-			expectedOut:   "Error: required flag(s) \"versions\" not set\nUsage:\n  filter [flags]\n\nFlags:\n  -h, --help              help for filter\n  -H, --highest           Filter by highest version\n  -s, --stream string     Filter by major, minor, patch, prerelease version and build metadata streams\n  -V, --versions string   Version list to filter",
-		},
-		{
-			name:        "Provided version",
+			name:        "Provided single version highest",
 			inputArgs:   []string{"--versions", "1.2.3", "--highest"},
 			expectedOut: "1.2.3",
 		},
 		{
-			name:        "Provided version",
+			name:        "Provided multiple versions highest",
 			inputArgs:   []string{"--versions", "1.2.3, 1.1.1", "--highest"},
+			expectedOut: "1.2.3",
+		},
+		{
+			name:        "Provided multiple versions highest with some bad versions",
+			inputArgs:   []string{"--versions", "1.2.3, 1.1.1, bad.version", "--highest"},
 			expectedOut: "1.2.3",
 		},
 	}

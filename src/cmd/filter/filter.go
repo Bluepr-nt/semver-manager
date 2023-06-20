@@ -14,10 +14,7 @@ func NewFilterCommand() *cobra.Command {
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			versions, err := models.StringToVersionList(filterArgs.Versions)
-			if err != nil {
-				return err
-			}
+			versions := filter.GetVersions(filterArgs.Versions)
 
 			filters := []filter.FilterFunc{}
 			if filterArgs.StreamFilter != "" {
@@ -42,7 +39,8 @@ func NewFilterCommand() *cobra.Command {
 	}
 
 	filterCmd.Flags().StringVarP(&filterArgs.Versions, "versions", "V", "", "Version list to filter")
-	filterCmd.MarkFlagRequired("versions")
+	// filterCmd.MarkFlagRequired("versions")
+
 	filterCmd.Flags().StringVarP(&filterArgs.StreamFilter, "stream", "s", "", "Filter by major, minor, patch, prerelease version and build metadata streams")
 	filterCmd.Flags().BoolVarP(&filterArgs.Highest, "highest", "H", false, "Filter by highest version")
 	return filterCmd

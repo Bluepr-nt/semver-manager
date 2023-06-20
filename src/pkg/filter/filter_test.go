@@ -420,6 +420,23 @@ func TestVersionPatternFilter(t *testing.T) {
 				newVersion("1.2.3-alpha.beta"),
 			},
 		},
+		{
+			name:    "Release only",
+			pattern: newVersionPattern("*.*.*"),
+			versions: []models.Version{
+				newVersion("1.2.3"),
+				newVersion("1.2.4"),
+				newVersion("1.2.3+exp.sha.5114f85"),
+				newVersion("1.2.3-alpha.beta"),
+				newVersion("1.2.3-beta"),
+				newVersion("1.2.3-alpha.beta+20130313144700"),
+			},
+			want: []models.Version{
+				newVersion("1.2.3"),
+				newVersion("1.2.4"),
+				newVersion("1.2.3+exp.sha.5114f85"),
+			},
+		},
 	}
 
 	for _, tt := range tests {
