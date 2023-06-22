@@ -14,7 +14,10 @@ jobs:
           go-version: '^1.20.3'
           check-latest: true
           cache-dependency-path: smgr/go.sum
-      - run: cd src; go test ./...
+      - name: Add integration test config
+        run: |
+          echo -e "OWNER: 13013SwagR\nREPO: semver-manager-test\nTOKEN: ${{ secrets.GITHUB_TOKEN }}" > src/cmd/fetch/fetch_test.yaml
+      - run: cd src; go test ./... -cover
   build:
     runs-on: ubuntu-latest
     outputs:
@@ -30,8 +33,10 @@ jobs:
         id: build_number 
         run: |
           echo "BUILD_ID=$(echo ${GITHUB_SHA} | cut -c1-7)-$(date '+%Y%m%dT%H%M%S')" >> $GITHUB_OUTPUT
+
       - name: Create artifact
-        run: cd src; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} ./cmd/smgr
+        run: |
+          cd src; go build -o ../${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }} ./cmd/smgr
       - name: validate build artifact creation
         run: ls -al 
       - name: Upload a Build Artifact
