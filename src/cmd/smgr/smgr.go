@@ -48,7 +48,7 @@ func main() {
 	flag.Set("alsologtostderr", "false")
 	flag.Parse()
 	rootCmd := NewRootCommand(nil)
-	// Execute the root command
+	
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
