@@ -39,8 +39,6 @@ func NewFilterCommand() *cobra.Command {
 	}
 
 	filterCmd.Flags().StringVarP(&filterArgs.Versions, "versions", "V", "", "Version list to filter")
-	// filterCmd.MarkFlagRequired("versions")
-
 	filterCmd.Flags().StringVarP(&filterArgs.StreamFilter, "stream", "s", "", "Filter by major, minor, patch, prerelease version and build metadata streams")
 	filterCmd.Flags().BoolVarP(&filterArgs.Highest, "highest", "H", false, "Filter by highest version")
 	return filterCmd
