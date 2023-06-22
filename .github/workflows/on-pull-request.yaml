@@ -15,6 +15,9 @@ jobs:
           go-version: '^1.20.3'
           check-latest: true
           cache-dependency-path: smgr/go.sum
+      - name: Add integration test config
+        run: |
+          echo -e "OWNER: 13013SwagR\nREPO: semver-manager-test\nTOKEN: ${{ secrets.GITHUB_TOKEN }}" > src/cmd/fetch/fetch_test.yaml
       - run: cd src; go test ./...
   build:
     runs-on: ubuntu-latest
