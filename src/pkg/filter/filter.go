@@ -44,25 +44,6 @@ func Highest() FilterFunc {
 	}
 }
 
-func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
-	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
-		return false
-	}
-
-	for i, prIdentifierPattern := range prIdentifiersPattern {
-		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].String() {
-			return false
-		}
-	}
-
-	return true
-}
-
-func toUint(s string) uint64 {
-	v, _ := strconv.ParseUint(s, 10, 64)
-	return v
-}
-
 func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
@@ -94,6 +75,36 @@ func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	}
 }
 
+func GetVersions(stringVersions string) []models.Version {
+	var versions []models.Version
+
+	for _, stringVersion := range models.SplitVersions(stringVersions) {
+		version, _ := models.ParseVersion(stringVersion)
+		versions = append(versions, version)
+	}
+
+	return versions
+}
+
+func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
+	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
+		return false
+	}
+
+	for i, prIdentifierPattern := range prIdentifiersPattern {
+		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].String() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func toUint(s string) uint64 {
+	v, _ := strconv.ParseUint(s, 10, 64)
+	return v
+}
+
 func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern, buildMetadata models.BuildMetadata) bool {
 	if len(buildIdentifiersPattern) != len(buildMetadata.Identifiers) {
 		return false
@@ -106,15 +117,4 @@ func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern,
 	}
 
 	return true
-}
-
-func GetVersions(stringVersions string) []models.Version {
-	var versions []models.Version
-
-	for _, stringVersion := range models.SplitVersions(stringVersions) {
-		version, _ := models.ParseVersion(stringVersion)
-		versions = append(versions, version)
-	}
-
-	return versions
 }

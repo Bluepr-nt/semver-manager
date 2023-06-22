@@ -15,7 +15,7 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
 ## Features
 ### Implemented
 - Fetch 
-  The fetch command allows to fetch semantic versions from multiple platforms and filter them
+  The fetch command allows to fetch semantic versions from multiple platforms and filter them.  
   The fetch command is automatically chained with the filter command
 
   Platforms:
