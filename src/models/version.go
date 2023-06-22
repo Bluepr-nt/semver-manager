@@ -281,17 +281,12 @@ func (i *PRIdentifier) Set(v string) error {
 	return fmt.Errorf("prerelease identifiers MUST comprise only ASCII alphanumerics and hyphens [0-9-Za-z-], got: %s", v)
 }
 
-// Function containsOnly checks if all characters in the input string 's' are present in the set of valid characters 'set'
 func containsOnly(s string, set string) bool {
 
-	// A helper function that checks if a single character is in the set of valid characters
 	characterIsInSet := func(r rune) bool {
 		return strings.ContainsRune(set, r)
 	}
 
-	// The strings.IndexFunc function will return the index of the first character in 's' that does not satisfy the helper function.
-	// If all characters satisfy the helper function, it returns -1.
-	// Therefore, if the returned index is -1, all characters in 's' are in the 'set' of valid characters.
 	return strings.IndexFunc(s, func(r rune) bool {
 		return !characterIsInSet(r)
 	}) == -1
