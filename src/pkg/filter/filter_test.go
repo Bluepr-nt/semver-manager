@@ -18,40 +18,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Simple tags list",
 			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 0,
-						Patch: 0,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("1"),
-						},
-					},
-					BuildMetadata: models.BuildMetadata{
-						Identifiers: []models.BuildIdentifier{
-							newBuildIdentifier("054"),
-						},
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("1"),
-						},
-					},
-					BuildMetadata: models.BuildMetadata{
-						Identifiers: []models.BuildIdentifier{
-							newBuildIdentifier("054"),
-						},
-					},
-				},
+				newVersion("0.0.0-1+054"),
+				newVersion("0.1.0-1+054"),
 			},
 			want:    "0.1.0-1+054",
 			wantErr: false,
@@ -59,25 +27,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Mixed release and prerelease versions",
 			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 0,
-						Patch: 0,
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 0,
-						Patch: 0,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("2"),
-						},
-					},
-				},
+				newVersion("1.0.0"),
+				newVersion("0.0.0-2"),
 			},
 			want:    "1.0.0",
 			wantErr: false,
@@ -85,31 +36,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Prerelease identifiers with different lengths",
 			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("alpha"),
-							newPrIdentifier("2"),
-						},
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-					Prerelease: models.PRVersion{
-						Identifiers: []models.PRIdentifier{
-							newPrIdentifier("alpha"),
-						},
-					},
-				},
+				newVersion("0.1.0-alpha.2"),
+				newVersion("0.1.0-alpha"),
 			},
 			want:    "0.1.0-alpha.2",
 			wantErr: false,
@@ -117,30 +45,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Versions with different build metadata",
 			versions: []models.Version{
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-					BuildMetadata: models.BuildMetadata{
-						Identifiers: []models.BuildIdentifier{
-							newBuildIdentifier("100"),
-						},
-					},
-				},
-				{
-					Release: models.Release{
-						Major: 0,
-						Minor: 1,
-						Patch: 0,
-					},
-					BuildMetadata: models.BuildMetadata{
-						Identifiers: []models.BuildIdentifier{
-							newBuildIdentifier("200"),
-						},
-					},
-				},
+				newVersion("0.1.0+100"),
+				newVersion("0.1.0+200"),
 			},
 			want:    "0.1.0+100",
 			wantErr: false,
@@ -197,27 +103,9 @@ func TestApplyFilters(t *testing.T) {
 			name: "Apply multiple filters",
 			args: args{
 				versions: models.VersionSlice{
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 2,
-							Patch: 3,
-						},
-					},
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 2,
-							Patch: 4,
-						},
-					},
-					{
-						Release: models.Release{
-							Major: 2,
-							Minor: 3,
-							Patch: 4,
-						},
-					},
+					newVersion("1.2.3"),
+					newVersion("1.2.4"),
+					newVersion("2.3.4"),
 				},
 				filters: []FilterFunc{
 					VersionPatternFilter(newVersionPattern("1.2.*")),
@@ -225,13 +113,7 @@ func TestApplyFilters(t *testing.T) {
 				},
 			},
 			want: models.VersionSlice{
-				{
-					Release: models.Release{
-						Major: 1,
-						Minor: 2,
-						Patch: 4,
-					},
-				},
+				newVersion("1.2.4"),
 			},
 			wantErr: false,
 		},
@@ -239,27 +121,9 @@ func TestApplyFilters(t *testing.T) {
 			name: "No matching version after filters",
 			args: args{
 				versions: models.VersionSlice{
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 2,
-							Patch: 3,
-						},
-					},
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 3,
-							Patch: 4,
-						},
-					},
-					{
-						Release: models.Release{
-							Major: 2,
-							Minor: 3,
-							Patch: 4,
-						},
-					},
+					newVersion("1.2.3"),
+					newVersion("1.3.4"),
+					newVersion("2.3.4"),
 				},
 				filters: []FilterFunc{
 					VersionPatternFilter(newVersionPattern("4.*.*")),
@@ -272,20 +136,8 @@ func TestApplyFilters(t *testing.T) {
 			name: "Filter returns an error",
 			args: args{
 				versions: models.VersionSlice{
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 2,
-							Patch: 3,
-						},
-					},
-					{
-						Release: models.Release{
-							Major: 1,
-							Minor: 3,
-							Patch: 4,
-						},
-					},
+					newVersion("1.2.3"),
+					newVersion("1.3.4"),
 				},
 				filters: []FilterFunc{
 					VersionPatternFilter(newVersionPattern("1.1.1")),

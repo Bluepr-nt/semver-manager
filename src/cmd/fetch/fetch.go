@@ -3,6 +3,7 @@ package fetch
 import (
 	"src/cmd/smgr/cmd/utils"
 	datasourceUtils "src/cmd/smgr/datasource/utils"
+	"src/cmd/smgr/models"
 
 	"strings"
 
@@ -22,9 +23,12 @@ func NewFetchCommand(filterCmd *cobra.Command) *cobra.Command {
 	config := &config{}
 	var fetchCmd = &cobra.Command{
 		Use:   "fetch",
-		Short: "Fetch semver tags from a registry or repository.",
-		Long: `Fetch semver tags from a registry or repository and
-    sorted by highest version first. Includes tags starting 'v' as in 'v0.0.0`,
+		Short: "Fetch semver tags from a repository.",
+		Long: `Fetch semver tags from a repository and
+sorted by highest version first. Fetch also supports all
+the filters from the filter command. If the --versions
+flag is set, the versions passed will be merged with the
+fetched versions.`,
 
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return utils.InitializeConfig(cmd)
@@ -59,6 +63,14 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command, filterCmd *cobra.Com
 
 	if filterCmd != nil {
 		klog.V(1).Info("Filtering tags...")
+		cliTags, err := filterCmd.Flags().GetString("versions")
+		if err != nil {
+			return err
+		}
+		if len(cliTags) > 0 {
+			klog.V(2).Infof("Merging tags: %s", cliTags)
+			semverTags = append(semverTags, models.SplitVersions(cliTags)...)
+		}
 		err = filterCmd.Flags().Set("versions", strings.Join(semverTags, " "))
 		if err != nil {
 			return err

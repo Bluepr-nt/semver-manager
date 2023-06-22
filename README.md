@@ -16,19 +16,25 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
 ### Implemented
 - Fetch 
   The fetch command allows to fetch semantic versions from multiple platforms and filter them
-  Filters:
-  - highest semver tag
+  The fetch command is automatically chained with the filter command
 
   Platforms:
   - Github
-
+- Filter
+  - Highest: returns the highest semver found, is always run after all other filters
+  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in stream filter pattern.
+    Examples:
+    - Pattern: 1.*.*
+      Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
+      Result: 1.1.1, 1.1.1+build01
+    - Pattern: *.*.*+AMD
+      Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
+      Result: 1.1.1+AMD
 ### To do
 #### Fetch
 - Implement additional platforms: gitlab, local git repository, oci repository, ghrc.io, npm, text file
 #### Filter
-- filters: MAJOR, MINOR, PATCH
-- sub-versions filters e.g. `0.0.0-alpha`
-- filter prerelease and build metadata
+
 - range
 #### increment
 - increment version MAJOR, MINOR, PATCH, defaults to latest number
