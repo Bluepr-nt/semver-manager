@@ -12,4 +12,6 @@
 *.out
 
 ccs.yaml
-smgr/smgr
+smgr-test
+smgr
+fetch_test.yaml

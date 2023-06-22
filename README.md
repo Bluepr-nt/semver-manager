@@ -23,14 +23,34 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
   - Github
 
 ### To do
-- Validate semantic versioning
+#### Fetch
+- Implement additional platforms: gitlab, local git repository, oci repository, ghrc.io, npm, text file
+#### Filter
+- filters: MAJOR, MINOR, PATCH
+- sub-versions filters e.g. `0.0.0-alpha`
+- filter prerelease and build metadata
+- range
+#### increment
+- increment version MAJOR, MINOR, PATCH, defaults to latest number
 - Increment major, minor, or patch versions with a single command
-- Manage your project's version history
-- Support for prerelease and build metadata
+
+#### Push
+- create tag <tag> on `<destination> `
+
+#### Print
+- create version object and return json or yaml
+
+#### Validate
+- Validate semantic versioning
+
+#### CI interface
 - Easy integration with CI/CD pipelines (github action)
-- fetch main filters: MAJOR, MINOR, PATCH
-- fetch sub-versions filters e.g. `0.0.0-alpha`
-- create tag on `<destination> `
+
+#### CMD interface
+
+#### Backend server with database and api
+- Manage your project's version history
+
 ## Installation
 
 To install Semver-Manager, you can download the binary for your platform from the [Releases](https://github.com/13013SwagR/semver-manager/releases) page or build it from source.
