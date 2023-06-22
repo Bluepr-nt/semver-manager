@@ -14,8 +14,6 @@ type Validator interface {
 type LooseValidator struct{}
 type StrictValidator struct{}
 
-// type StreamValidator struct{}
-
 func NewSemverValidator(vType string) Validator {
 	if vType == "loose" {
 		return &LooseValidator{}
