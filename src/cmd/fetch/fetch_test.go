@@ -102,19 +102,17 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			output := new(bytes.Buffer)
+			
 			filterCmd := filter.NewFilterCommand()
 			filterCmd.SetOut(output)
 			filterCmd.SetErr(output)
+			
 			cmd := NewFetchCommand(filterCmd)
-
 			cmd.SetOut(output)
 			cmd.SetErr(output)
 
-			// var args []string
 			for _, flag := range tc.flags {
 				err := cmd.Flags().Set(flag.name, flag.value)
-				// args = append(args, fmt.Sprintf("--%s", flag.name))
-				// args = append(args, flag.value)
 				if err != nil {
 					t.Fatalf("unexpected error setting flag '%s': %v", flag.name, err)
 				}
