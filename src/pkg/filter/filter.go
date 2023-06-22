@@ -44,7 +44,6 @@ func Highest() FilterFunc {
 	}
 }
 
-// matchPrerelease checks if the prerelease identifiers match the pattern.
 func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
 	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
 		return false
@@ -59,7 +58,6 @@ func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelea
 	return true
 }
 
-// toUint converts a string to a uint64.
 func toUint(s string) uint64 {
 	v, _ := strconv.ParseUint(s, 10, 64)
 	return v
