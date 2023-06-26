@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	incrementModels "src/cmd/smgr/pkg/increment/models"
 	"strings"
 )
 
@@ -11,6 +12,10 @@ type VersionPattern struct {
 	Release    ReleasePattern
 	Prerelease PRVersionPattern
 	Build      BuildMetadataPattern
+}
+
+func (v VersionPattern) IsReleaseOnlyPattern() bool {
+	return len(v.Prerelease.Identifiers) < 1
 }
 
 func ParseVersionPattern(pattern string) (VersionPattern, error) {
@@ -112,7 +117,7 @@ func parseReleasePattern(pattern string) (ReleasePattern, error) {
 func parseMajorPattern(pattern string) (MajorPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 2)
 	majorPattern := tokens[0]
-	p, err := parseDigitsPattern(majorPattern, Major)
+	p, err := parseDigitsPattern(majorPattern, incrementModels.Major)
 	if err != nil {
 		return MajorPattern{}, err
 	}
@@ -122,7 +127,7 @@ func parseMajorPattern(pattern string) (MajorPattern, error) {
 func parseMinorPattern(pattern string) (MinorPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	minor := tokens[1]
-	p, err := parseDigitsPattern(minor, Minor)
+	p, err := parseDigitsPattern(minor, incrementModels.Minor)
 	if err != nil {
 		return MinorPattern{}, err
 	}
@@ -132,14 +137,14 @@ func parseMinorPattern(pattern string) (MinorPattern, error) {
 func parsePatchPattern(pattern string) (PatchPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	patch := tokens[2]
-	p, err := parseDigitsPattern(patch, Patch)
+	p, err := parseDigitsPattern(patch, incrementModels.Patch)
 	if err != nil {
 		return PatchPattern{}, err
 	}
 	return PatchPattern{pattern: p}, nil
 }
 
-func parseDigitsPattern(pattern, increment string) (Pattern, error) {
+func parseDigitsPattern(pattern string, increment incrementModels.Increment) (Pattern, error) {
 	if err := versionDigitsCompliance(pattern, increment); err != nil {
 		if pattern == wildcard {
 			return Pattern{value: pattern}, nil

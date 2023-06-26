@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	incrementModels "src/cmd/smgr/pkg/increment/models"
 	"strconv"
 	"strings"
 )
@@ -10,9 +11,6 @@ const (
 	numbers  string = "0123456789"
 	alphas          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 	alphanum        = alphas + numbers
-	Major           = "major"
-	Minor           = "minor"
-	Patch           = "patch"
 )
 
 type Release struct {
@@ -29,6 +27,10 @@ type Version struct {
 	Release       Release
 	Prerelease    PRVersion
 	BuildMetadata BuildMetadata
+}
+
+func (v Version) IsRelease() bool {
+	return len(v.Prerelease.Identifiers) < 1
 }
 
 func (v *Version) String() string {
@@ -145,7 +147,7 @@ func parsePrerelease(v string) (PRVersion, error) {
 func parsePatch(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 3)
 	patch := tokens[2]
-	if err := versionDigitsCompliance(patch, Patch); err != nil {
+	if err := versionDigitsCompliance(patch, incrementModels.Patch); err != nil {
 		return 0, err
 	}
 	patchUint, err := strconv.ParseUint(patch, 10, 64)
@@ -160,7 +162,7 @@ func parseMinor(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 3)
 	minor := tokens[1]
 
-	if err := versionDigitsCompliance(minor, Minor); err != nil {
+	if err := versionDigitsCompliance(minor, incrementModels.Minor); err != nil {
 		return 0, err
 	}
 
@@ -174,7 +176,7 @@ func parseMinor(v string) (uint64, error) {
 func parseMajor(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 2)
 	major := tokens[0]
-	if err := versionDigitsCompliance(major, Major); err != nil {
+	if err := versionDigitsCompliance(major, incrementModels.Major); err != nil {
 		return 0, err
 	}
 
@@ -319,9 +321,9 @@ func (i *BuildIdentifier) Set(v string) error {
 	return nil
 }
 
-func versionDigitsCompliance(version, increment string) error {
-	if increment != "major" && increment != "minor" && increment != "patch" {
-		return fmt.Errorf("increment MUST be one of 'major', 'minor', or 'patch', got: %s", increment)
+func versionDigitsCompliance(version string, increment incrementModels.Increment) error {
+	if increment != incrementModels.Major && increment != incrementModels.Minor && increment != incrementModels.Patch {
+		return fmt.Errorf("increment MUST be one of %s, %s, or %s, got: %s", incrementModels.Major, incrementModels.Minor, incrementModels.Patch, increment)
 	}
 	if len(version) < 1 {
 		return fmt.Errorf("%s MUST NOT be empty, got: %s", increment, version)
@@ -338,10 +340,9 @@ func versionDigitsCompliance(version, increment string) error {
 	return nil
 }
 
-func SplitVersions(stringVersions string) []string {
+func SplitVersions(stringVersions string) (versionStringSlice []string) {
 	stringVersions = strings.TrimSpace(stringVersions)
 
-	versionStringSlice := []string{}
 	if strings.Contains(stringVersions, ",") {
 		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
 		versionStringSlice = strings.Split(stringVersions, ",")

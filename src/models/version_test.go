@@ -55,9 +55,6 @@ func TestNewBuildIdentifier(t *testing.T) {
 }
 
 func TestNewPrIdentifier(t *testing.T) {
-	type args struct {
-		v string
-	}
 	tests := []struct {
 		name    string
 		input   string
@@ -88,9 +85,6 @@ func TestNewPrIdentifier(t *testing.T) {
 }
 
 func TestNewVersion(t *testing.T) {
-	type args struct {
-		v string
-	}
 	tests := []struct {
 		name    string
 		input   string
