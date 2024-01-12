@@ -29,38 +29,38 @@ func GetHighestStreamVersion(versions []models.Version, streamPattern models.Ver
 }
 
 // Calculate increment between highest release and highest prerelease as existing increment
-func CalculateReleaseIncrementForPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement Increment) Increment {
+func CalculateReleaseIncrementForPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement models.Increment) models.Increment {
 	existingIncrement := GetReleaseToPreReleaseIncrementType(highestRelease, highestPrerelease)
 	if existingIncrement == "" {
 		return requestedIncrement
 	} else if requestedIncrement.IsHigherThan(existingIncrement) {
 		return requestedIncrement
 	}
-	return None
+	return models.None
 }
 
-func GetReleaseToPreReleaseIncrementType(highestRelease models.Version, highestPrerelease models.Version) Increment {
+func GetReleaseToPreReleaseIncrementType(highestRelease models.Version, highestPrerelease models.Version) models.Increment {
 	if highestRelease.Release.Major < highestPrerelease.Release.Major {
-		return Major
+		return models.Major
 	} else if highestRelease.Release.Minor < highestPrerelease.Release.Minor {
-		return Minor
+		return models.Minor
 	} else if highestRelease.Release.Patch < highestPrerelease.Release.Patch {
-		return Patch
+		return models.Patch
 	}
 	return ""
 }
 
-func ReleaseIncrement(sourceVersion models.Version, increment Increment) models.Version {
+func ReleaseIncrement(sourceVersion models.Version, increment models.Increment) models.Version {
 	incrementedVersion := models.Version{}
-	if increment == Major {
+	if increment == models.Major {
 		incrementedVersion.Release.Major = sourceVersion.Release.Major + 1
 		incrementedVersion.Release.Minor = 0
 		incrementedVersion.Release.Patch = 0
-	} else if increment == Minor {
+	} else if increment == models.Minor {
 		incrementedVersion.Release.Major = sourceVersion.Release.Major
 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor + 1
 		incrementedVersion.Release.Patch = 0
-	} else if increment == Patch {
+	} else if increment == models.Patch {
 		incrementedVersion.Release.Major = sourceVersion.Release.Major
 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch + 1
@@ -68,7 +68,7 @@ func ReleaseIncrement(sourceVersion models.Version, increment Increment) models.
 	return incrementedVersion
 }
 
-func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment Increment) (models.Version, error) {
+func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
 	if !streamPattern.IsReleaseOnlyPattern() {
 		return models.Version{}, fmt.Errorf("error: stream pattern must be release only")
 	}
@@ -80,23 +80,23 @@ func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern m
 	return ReleaseIncrement(sourceVersion, increment), nil
 }
 
-// func PrereleaseIncrement(sourceVersion models.Version, incrementType Increment) models.Version {
+// func PrereleaseIncrement(sourceVersion models.Version, incrementType models.Increment) models.Version {
 // 	incrementedVersion := models.Version{}
-// 	if incrementType == Major {
+// 	if incrementType == models.Major {
 // 		incrementedVersion.Release.Major = sourceVersion.Release.Major
 // 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
 // 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch
 // 		incrementedVersion.Prerelease.Major = sourceVersion.Prerelease.Major + 1
 // 		incrementedVersion.Prerelease.Minor = 0
 // 		incrementedVersion.Prerelease.Patch = 0
-// 	} else if incrementType == Minor {
+// 	} else if incrementType == models.Minor {
 // 		incrementedVersion.Release.Major = sourceVersion.Release.Major
 // 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
 // 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch
 // 		incrementedVersion.Prerelease.Major = sourceVersion.Prerelease.Major
 // 		incrementedVersion.Prerelease.Minor = sourceVersion.Prerelease.Minor + 1
 // 		incrementedVersion.Prerelease.Patch = 0
-// 	} else if incrementType == Patch {
+// 	} else if incrementType == models.Patch {
 // 		incrementedVersion.Release.Major = sourceVersion.Release.Major
 // 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
 // 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch

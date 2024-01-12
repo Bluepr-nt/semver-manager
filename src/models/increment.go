@@ -1,4 +1,4 @@
-package increment
+package models
 
 import "errors"
 

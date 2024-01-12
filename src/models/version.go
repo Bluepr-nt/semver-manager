@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	incrementModels "src/cmd/smgr/pkg/increment/models"
 	"strconv"
 	"strings"
 )
@@ -147,7 +146,7 @@ func parsePrerelease(v string) (PRVersion, error) {
 func parsePatch(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 3)
 	patch := tokens[2]
-	if err := versionDigitsCompliance(patch, incrementModels.Patch); err != nil {
+	if err := versionDigitsCompliance(patch, Patch); err != nil {
 		return 0, err
 	}
 	patchUint, err := strconv.ParseUint(patch, 10, 64)
@@ -162,7 +161,7 @@ func parseMinor(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 3)
 	minor := tokens[1]
 
-	if err := versionDigitsCompliance(minor, incrementModels.Minor); err != nil {
+	if err := versionDigitsCompliance(minor, Minor); err != nil {
 		return 0, err
 	}
 
@@ -176,7 +175,7 @@ func parseMinor(v string) (uint64, error) {
 func parseMajor(v string) (uint64, error) {
 	tokens := strings.SplitN(v, ".", 2)
 	major := tokens[0]
-	if err := versionDigitsCompliance(major, incrementModels.Major); err != nil {
+	if err := versionDigitsCompliance(major, Major); err != nil {
 		return 0, err
 	}
 
@@ -321,9 +320,9 @@ func (i *BuildIdentifier) Set(v string) error {
 	return nil
 }
 
-func versionDigitsCompliance(version string, increment incrementModels.Increment) error {
-	if increment != incrementModels.Major && increment != incrementModels.Minor && increment != incrementModels.Patch {
-		return fmt.Errorf("increment MUST be one of %s, %s, or %s, got: %s", incrementModels.Major, incrementModels.Minor, incrementModels.Patch, increment)
+func versionDigitsCompliance(version string, increment Increment) error {
+	if increment != Major && increment != Minor && increment != Patch {
+		return fmt.Errorf("increment MUST be one of %s, %s, or %s, got: %s", Major, Minor, Patch, increment)
 	}
 	if len(version) < 1 {
 		return fmt.Errorf("%s MUST NOT be empty, got: %s", increment, version)
