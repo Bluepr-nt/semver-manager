@@ -19,12 +19,12 @@ func (i Increment) Validate() error {
 }
 
 func (i Increment) IsHigherThan(comparedTo Increment) bool {
-	if i == Major && comparedTo == Major {
+	if i == Major {
+		return comparedTo == Major
+	} else if i == Minor {
+		return comparedTo == Patch
+	} else if i == Patch {
 		return false
-	} else if i == Minor && comparedTo != Major {
-		return true
-	} else if i == Patch && comparedTo == Patch {
-		return true
 	}
 	return false
 }
