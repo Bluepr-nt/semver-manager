@@ -11,7 +11,7 @@ const (
 	None  Increment = "none"
 )
 
-func (i Increment) Validate() error {
+func (i Increment) ValidateIncrement() error {
 	if i != Major && i != Minor && i != Patch {
 		return errors.New("invalid increment type")
 	}
@@ -27,4 +27,19 @@ func (i Increment) IsHigherThan(comparedTo Increment) bool {
 		return false
 	}
 	return false
+}
+
+func IncrementVersion(versionList []Version, i Increment, targetStream VersionPattern) error {
+	if err := i.ValidateIncrement(); err != nil {
+		return err
+	}
+
+	var highest Version
+	for _, version := range versionList {
+		if version.IsHigherThan(highest) {
+			highest = version
+		}
+	}
+	// get highest release
+	return nil
 }

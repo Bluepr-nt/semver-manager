@@ -11,6 +11,7 @@ import (
 
 	"src/cmd/smgr/cmd/fetch"
 	"src/cmd/smgr/cmd/filter"
+	"src/cmd/smgr/cmd/increment"
 	"src/cmd/smgr/cmd/utils"
 )
 
@@ -37,7 +38,9 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
 	cmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
 	filterCmd := filter.NewFilterCommand()
-	cmd.AddCommand(filterCmd, fetch.NewFetchCommand(filterCmd))
+	fetchCmd := fetch.NewFetchCommand(filterCmd)
+	incrementCmd := increment.NewIncrementCommand()
+	cmd.AddCommand(filterCmd, fetchCmd, incrementCmd)
 
 	return cmd
 }

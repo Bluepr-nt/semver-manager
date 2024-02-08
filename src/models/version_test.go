@@ -367,3 +367,71 @@ func TestParseVersionPattern(t *testing.T) {
 		})
 	}
 }
+
+func TestVersion_IsHigherThan(t *testing.T) {
+	type args struct {
+		versionB string
+	}
+	tests := []struct {
+		name string
+		v    string
+		args args
+		want bool
+	}{
+		{
+			name: "Major version higher",
+			v:    "2.2.2",
+			args: args{
+				versionB: "1.2.2",
+			},
+			want: true,
+		},
+		{
+			name: "Minor version higher",
+			v:    "1.2.2",
+			args: args{
+				versionB: "1.1.2",
+			},
+			want: true,
+		},
+		{
+			name: "Patch version higher",
+			v:    "1.0.2",
+			args: args{
+				versionB: "1.0.1",
+			},
+			want: true,
+		},
+		{
+			name: "Same version not higher",
+			v:    "1.0.0",
+			args: args{
+				versionB: "1.0.0",
+			},
+			want: false,
+		},
+		{
+			name: "Prerelease version higher",
+			v:    "1.0.0-beta.2",
+			args: args{
+				versionB: "1.0.0-beta.1",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version lower",
+			v:    "1.0.0-alpha.1",
+			args: args{
+				versionB: "1.0.0-beta.1",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := ParseVersion(tt.v)
+			versionB, _ := ParseVersion(tt.args.versionB)
+			assert.Equal(t, tt.want, v.IsHigherThan(versionB), "Version.IsHigherThan() result not as expected")
+		})
+	}
+}

@@ -248,8 +248,16 @@ type PRIdentifier struct {
 	identifier string
 }
 
-func (i *PRIdentifier) String() string {
+func (i PRIdentifier) String() string {
 	return i.identifier
+}
+
+func (i PRIdentifier) IsEqualTo(identifierB PRIdentifier) bool {
+	return i.identifier == identifierB.identifier
+}
+
+func (i PRIdentifier) IsHigherThan(identifierB PRIdentifier) bool {
+	return i.identifier > identifierB.identifier
 }
 
 func ParsePrIdentifier(v string) (PRIdentifier, error) {
@@ -349,4 +357,34 @@ func SplitVersions(stringVersions string) (versionStringSlice []string) {
 		versionStringSlice = strings.Split(stringVersions, " ")
 	}
 	return versionStringSlice
+}
+
+func (v Version) IsHigherThan(versionB Version) bool {
+	if v.Release.Major != versionB.Release.Major {
+		return v.Release.Major > versionB.Release.Major
+	}
+	if v.Release.Minor != versionB.Release.Minor {
+		return v.Release.Minor > versionB.Release.Minor
+	}
+	if v.Release.Patch != versionB.Release.Patch {
+		return v.Release.Patch > versionB.Release.Patch
+	}
+
+	if v.IsRelease() && versionB.IsRelease() {
+		return false
+	}
+
+	if versionB.IsRelease() {
+		return false
+	}
+
+	for index, identifier := range v.Prerelease.Identifiers {
+		if len(versionB.Prerelease.Identifiers) <= index {
+			return true
+		}
+		if !identifier.IsEqualTo(versionB.Prerelease.Identifiers[index]) {
+			return identifier.IsHigherThan(versionB.Prerelease.Identifiers[index])
+		}
+	}
+	return true
 }
