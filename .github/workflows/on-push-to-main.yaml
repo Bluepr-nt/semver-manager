@@ -67,17 +67,23 @@ jobs:
       with:
         name: ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }}
 
-    - name: Generate new semver compliant version
-      id: new_version
-      uses: paulhatch/semantic-version@v4.0.2
+    - name: Get Commit Version Increment
+      uses: Bluepr-nt/Commit-Increment@main
+      id: increment
       with:
-        tag_prefix: ""
-        major_pattern: |
-          /^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$/
-        minor_pattern: |
-          /^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$/
-        format: "${major}.${minor}.${patch}-prerelease.${increment}+${{ needs.build.outputs.BUILD_ID }}"
-        short_tags: false
+        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$"
+        minor_pattern: "^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$"
+    # - name: Generate new semver compliant version
+    #   id: new_version
+    #   uses: paulhatch/semantic-version@v4.0.2
+    #   with:
+    #     tag_prefix: ""
+    #     major_pattern: |
+    #       /^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$/
+    #     minor_pattern: |
+    #       /^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$/
+    #     format: "${major}.${minor}.${patch}-prerelease.${increment}+${{ needs.build.outputs.BUILD_ID }}"
+    #     short_tags: false
 
     - name: Set release version with pattern <version_tag>+<commits_increment>-<build_number>
       id: release_version

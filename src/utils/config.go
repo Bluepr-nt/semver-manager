@@ -1,4 +1,4 @@
-package util
+package utils
 
 type DatasourceConfig struct {
 	Owner      string

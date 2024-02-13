@@ -1,9 +1,10 @@
 package increment
 
 import (
-	"github.com/spf13/cobra"
 	"src/cmd/smgr/cmd/utils"
 	"src/cmd/smgr/models"
+
+	"github.com/spf13/cobra"
 )
 
 type config struct {
@@ -36,10 +37,10 @@ func NewIncrementCommand() *cobra.Command {
 	}
 
 	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch")
-	incrementCmd.Flags().StringVarP(&config.sourceVersion, "source-version", "v", "0.0.0", "The source version to increment from")
+	incrementCmd.Flags().StringVarP(&config.sourceVersion, "source-version", "V", "0.0.0", "The source version to increment from")
 	incrementCmd.Flags().StringVarP(&config.sourceStream, "source-stream", "s", "", "The source stream to increment from")
 	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to")
-	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "", "", "The source versions to increment from")
+	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from")
 	incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of")
 	return incrementCmd
 }

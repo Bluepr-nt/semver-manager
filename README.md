@@ -27,10 +27,10 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
   - Highest: returns the highest semver found, is always run after all other filters
   - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in stream filter pattern.
     Examples:
-    - Pattern: 1.*.*
+    - Pattern: 1.\*.*
       Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
       Result: 1.1.1, 1.1.1+build01
-    - Pattern: *.*.*+AMD
+    - Pattern: \*.\*.*+AMD
       Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
       Result: 1.1.1+AMD
 ### To do

@@ -44,6 +44,17 @@ func Highest() FilterFunc {
 	}
 }
 
+func GetHighestStreamVersion(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
+	var err error
+	streamFilter := VersionPatternFilter(streamPattern)
+	highestFilter := Highest()
+	sourceVersion, err := ApplyFilters(versions, streamFilter, highestFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+	return sourceVersion[0], nil
+}
+
 func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version

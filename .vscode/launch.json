@@ -11,7 +11,7 @@
       "mode": "debug",
       "program": "${fileDirname}",
       "env": {},
-      "args": ["fetch"]
+      "args": ["increment"]
     }
   ]
 }

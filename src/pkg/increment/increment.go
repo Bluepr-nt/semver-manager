@@ -17,16 +17,6 @@ import (
 
 // filter by release stream and Get highest release
 // filter by prerelease stream Get highest prerelease
-func GetHighestStreamVersion(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
-	var err error
-	streamFilter := filter.VersionPatternFilter(streamPattern)
-	highestFilter := filter.Highest()
-	sourceVersion, err := filter.ApplyFilters(versions, streamFilter, highestFilter)
-	if err != nil {
-		return models.Version{}, err
-	}
-	return sourceVersion[0], nil
-}
 
 // Calculate increment between highest release and highest prerelease as existing increment
 func CalculateReleaseIncrementForPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement models.Increment) models.Increment {
@@ -73,7 +63,7 @@ func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern m
 		return models.Version{}, fmt.Errorf("error: stream pattern must be release only")
 	}
 
-	sourceVersion, err := GetHighestStreamVersion(sourceVersions, streamPattern)
+	sourceVersion, err := filter.GetHighestStreamVersion(sourceVersions, streamPattern)
 	if err != nil {
 		return models.Version{}, err
 	}
