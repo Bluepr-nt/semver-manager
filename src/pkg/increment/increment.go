@@ -19,9 +19,9 @@ import (
 // filter by prerelease stream Get highest prerelease
 
 // Calculate increment between highest release and highest prerelease as existing increment
-func CalculateReleaseIncrementForPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement models.Increment) models.Increment {
-	existingIncrement := GetReleaseToPreReleaseIncrementType(highestRelease, highestPrerelease)
-	if existingIncrement == "" {
+func CalculateIncrementTypeForNewPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement models.Increment) models.Increment {
+	existingIncrement := GetIncrementType(highestRelease, highestPrerelease)
+	if existingIncrement == models.None {
 		return requestedIncrement
 	} else if requestedIncrement.IsHigherThan(existingIncrement) {
 		return requestedIncrement
@@ -29,18 +29,18 @@ func CalculateReleaseIncrementForPrerelease(highestRelease models.Version, highe
 	return models.None
 }
 
-func GetReleaseToPreReleaseIncrementType(highestRelease models.Version, highestPrerelease models.Version) models.Increment {
-	if highestRelease.Release.Major < highestPrerelease.Release.Major {
+func GetIncrementType(highestRelease models.Version, comparedTo models.Version) models.Increment {
+	if highestRelease.Release.Major < comparedTo.Release.Major {
 		return models.Major
-	} else if highestRelease.Release.Minor < highestPrerelease.Release.Minor {
+	} else if highestRelease.Release.Minor < comparedTo.Release.Minor {
 		return models.Minor
-	} else if highestRelease.Release.Patch < highestPrerelease.Release.Patch {
+	} else if highestRelease.Release.Patch < comparedTo.Release.Patch {
 		return models.Patch
 	}
-	return ""
+	return models.None
 }
 
-func ReleaseIncrement(sourceVersion models.Version, increment models.Increment) models.Version {
+func IncrementRelease(sourceVersion models.Version, increment models.Increment) models.Version {
 	incrementedVersion := models.Version{}
 	if increment == models.Major {
 		incrementedVersion.Release.Major = sourceVersion.Release.Major + 1
@@ -58,7 +58,7 @@ func ReleaseIncrement(sourceVersion models.Version, increment models.Increment) 
 	return incrementedVersion
 }
 
-func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
+func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
 	if !streamPattern.IsReleaseOnlyPattern() {
 		return models.Version{}, fmt.Errorf("error: stream pattern must be release only")
 	}
@@ -67,7 +67,7 @@ func ReleaseIncrementFromStream(sourceVersions []models.Version, streamPattern m
 	if err != nil {
 		return models.Version{}, err
 	}
-	return ReleaseIncrement(sourceVersion, increment), nil
+	return IncrementRelease(sourceVersion, increment), nil
 }
 
 // func PrereleaseIncrement(sourceVersion models.Version, incrementType models.Increment) models.Version {
@@ -114,12 +114,13 @@ func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdent
 
 	sourceChar := sourceIdentifier.String()
 	if len(sourceChar) != 1 {
-		return incrementedIdentifier, fmt.Errorf("Expected a single character identifier")
+		return incrementedIdentifier, fmt.Errorf("expected a single character identifier")
 	}
 
 	sourceRunes := []rune(sourceChar)
+	// Add support for caps
 	if sourceRunes[0] < 'a' || sourceRunes[0] > 'z' {
-		return incrementedIdentifier, fmt.Errorf("Expected an alphabetical identifier")
+		return incrementedIdentifier, fmt.Errorf("expected an alphabetical identifier")
 	}
 
 	if sourceRunes[0] == 'z' {
