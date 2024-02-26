@@ -160,7 +160,70 @@ func TestIncrementReleaseFromStream(t *testing.T) {
 		want    models.Version
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Increment on release stream",
+			args: args{
+				sourceVersions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("0.1.0"),
+					testutils.NewVersion("2.0.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+				increment:     models.Minor,
+			},
+			want:    testutils.NewVersion("1.1.0"),
+			wantErr: false,
+		},
+		{
+			name: "No matching source version, new stream",
+			args: args{
+				sourceVersions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("2.*.*"),
+				increment:     models.Minor,
+			},
+			want:    testutils.NewVersion("2.0.0"),
+			wantErr: false,
+		},
+		{
+			name: "Increment on alpha stream",
+			args: args{
+				sourceVersions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("1.1.0-alpha.1"),
+					testutils.NewVersion("1.0.0-alpha.1"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*-alpha.*"),
+				increment:     models.Minor,
+			},
+			want:    testutils.NewVersion("0.0.0"),
+			wantErr: true,
+		},
+		{
+			name: "Increment major version",
+			args: args{
+				sourceVersions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+				increment:     models.Major,
+			},
+			want:    testutils.NewVersion("2.0.0"),
+			wantErr: false,
+		},
+		{
+			name: "Increment patch version",
+			args: args{
+				sourceVersions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+				increment:     models.Patch,
+			},
+			want:    testutils.NewVersion("1.0.1"),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

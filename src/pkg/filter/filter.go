@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"fmt"
 	"src/cmd/smgr/models"
 	"strconv"
 
@@ -27,7 +26,7 @@ func ApplyFilters(versions []models.Version, filters ...FilterFunc) (models.Vers
 func Highest() FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		if len(versions) == 0 {
-			return versions, fmt.Errorf("error version list is empty")
+			return versions, &models.EmptyVersionListError{}
 		}
 
 		highest := versions[0]
