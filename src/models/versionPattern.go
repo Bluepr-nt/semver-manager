@@ -17,6 +17,42 @@ func (v VersionPattern) IsReleaseOnlyPattern() bool {
 	return len(v.Prerelease.Identifiers) < 1
 }
 
+func (v VersionPattern) FirstVersion() (firstVersion Version) {
+	major := getAbsoluteValue(v.Release.Major.pattern)
+	minor := getAbsoluteValue(v.Release.Minor.pattern)
+	patch := getAbsoluteValue(v.Release.Patch.pattern)
+
+	release := fmt.Sprintf("%s.%s.%s", major, minor, patch)
+
+	for i, identifier := range v.Prerelease.Identifiers {
+		rawId := getAbsoluteValue(identifier.pattern)
+		if i == 0 {
+			release = fmt.Sprintf("%s-%s", release, rawId)
+		} else {
+			release = fmt.Sprintf("%s.%s", release, rawId)
+		}
+	}
+
+	for i, buildId := range v.Build.Identifiers {
+		rawId := getAbsoluteValue(buildId.pattern)
+		if i == 0 {
+			release = fmt.Sprintf("%s+%s", release, rawId)
+		} else {
+			release = fmt.Sprintf("%s.%s", release, rawId)
+		}
+	}
+	firstVersion, _ = ParseVersion(release)
+	return firstVersion
+}
+
+func getAbsoluteValue(patten Pattern) string {
+	if patten.value == wildcard {
+		return "0"
+	}
+	return patten.value
+}
+
+// func getAbsoluteIdentifiers
 func ParseVersionPattern(pattern string) (VersionPattern, error) {
 	release, err := parseReleasePattern(pattern)
 	if err != nil {

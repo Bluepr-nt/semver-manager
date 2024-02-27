@@ -66,7 +66,7 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 	sourceVersion, err := filter.GetHighestStreamVersion(sourceVersions, streamPattern)
 	if err != nil {
 		if _, ok := err.(*models.EmptyVersionListError); ok {
-			// new version on new release stream
+			return streamPattern.FirstVersion(), nil
 		} else {
 			return models.Version{}, err
 		}
