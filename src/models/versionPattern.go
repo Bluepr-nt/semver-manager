@@ -14,35 +14,65 @@ type VersionPattern struct {
 }
 
 func (v VersionPattern) IsReleaseOnlyPattern() bool {
-	return len(v.Prerelease.Identifiers) < 1
+	if v.IsEmpty() || len(v.Prerelease.Identifiers) > 0 {
+		return false
+	}
+	return true
 }
 
+func (v VersionPattern) IsEmpty() bool {
+	if v.Release.Major.Value() == "" &&
+		v.Release.Minor.Value() == "" &&
+		v.Release.Patch.Value() == "" &&
+		len(v.Prerelease.Identifiers) < 1 &&
+		len(v.Build.Identifiers) < 1 {
+		return true
+	}
+	return false
+}
 func (v VersionPattern) FirstVersion() (firstVersion Version) {
+	firstVersion.Release = v.FirstRelease()
+	firstVersion.Prerelease = v.FirstPrerelease()
+	firstVersion.BuildMetadata = v.FirstBuildMetadata()
+
+	return firstVersion
+}
+
+func (v VersionPattern) FirstRelease() (FirstRelease Release) {
 	major := getAbsoluteValue(v.Release.Major.pattern)
 	minor := getAbsoluteValue(v.Release.Minor.pattern)
 	patch := getAbsoluteValue(v.Release.Patch.pattern)
 
-	release := fmt.Sprintf("%s.%s.%s", major, minor, patch)
+	release, _ := parseRelease(fmt.Sprintf("%s.%s.%s", major, minor, patch))
+	return release
+}
 
+func (v VersionPattern) FirstPrerelease() PRVersion {
+	var rawPRVersion string
 	for i, identifier := range v.Prerelease.Identifiers {
 		rawId := getAbsoluteValue(identifier.pattern)
 		if i == 0 {
-			release = fmt.Sprintf("%s-%s", release, rawId)
+			rawPRVersion = fmt.Sprintf("%s-%s", rawPRVersion, rawId)
 		} else {
-			release = fmt.Sprintf("%s.%s", release, rawId)
+			rawPRVersion = fmt.Sprintf("%s.%s", rawPRVersion, rawId)
 		}
 	}
+	prVersion, _ := parsePrerelease(rawPRVersion)
+	return prVersion
+}
 
+func (v VersionPattern) FirstBuildMetadata() BuildMetadata {
+	var rawBuildMetadata string
 	for i, buildId := range v.Build.Identifiers {
 		rawId := getAbsoluteValue(buildId.pattern)
 		if i == 0 {
-			release = fmt.Sprintf("%s+%s", release, rawId)
+			rawBuildMetadata = fmt.Sprintf("%s+%s", rawBuildMetadata, rawId)
 		} else {
-			release = fmt.Sprintf("%s.%s", release, rawId)
+			rawBuildMetadata = fmt.Sprintf("%s.%s", rawBuildMetadata, rawId)
 		}
 	}
-	firstVersion, _ = ParseVersion(release)
-	return firstVersion
+	buildMetadata, _ := parseBuildMetadata(rawBuildMetadata)
+	return buildMetadata
 }
 
 func getAbsoluteValue(patten Pattern) string {

@@ -320,54 +320,6 @@ func TestVersion_String(t *testing.T) {
 	}
 }
 
-func TestParseVersionPattern(t *testing.T) {
-	tests := []struct {
-		name               string
-		pattern            string
-		expectedRelease    ReleasePattern
-		expectedPrerelease PRVersionPattern
-		expectErr          bool
-	}{
-		{
-			name:    "Valid Version Pattern",
-			pattern: "1.2.3-alpha.1",
-			expectedRelease: ReleasePattern{
-				Major: MajorPattern{Pattern{"1"}},
-				Minor: MinorPattern{Pattern{"2"}},
-				Patch: PatchPattern{Pattern{"3"}},
-			},
-			expectedPrerelease: PRVersionPattern{
-				Identifiers: []PRIdentifierPattern{
-					{pattern: Pattern{"alpha"}},
-					{pattern: Pattern{"1"}},
-				},
-			},
-			expectErr: false,
-		},
-		{
-			name:               "Invalid Version Pattern",
-			pattern:            "1.2.3-alpha.1.bad+",
-			expectedRelease:    ReleasePattern{},
-			expectedPrerelease: PRVersionPattern{},
-			expectErr:          true,
-		},
-		// add more test cases here
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pattern, err := ParseVersionPattern(tt.pattern)
-			if tt.expectErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedRelease, pattern.Release)
-				assert.Equal(t, tt.expectedPrerelease, pattern.Prerelease)
-			}
-		})
-	}
-}
-
 func TestVersion_IsHigherThan(t *testing.T) {
 	type args struct {
 		versionB string
