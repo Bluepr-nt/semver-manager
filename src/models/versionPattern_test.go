@@ -1,62 +1,68 @@
 package models
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestVersionPattern_FirstRelease(t *testing.T) {
-	type fields struct {
-		Release    ReleasePattern
-		Prerelease PRVersionPattern
-		Build      BuildMetadataPattern
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		wantFirstRelease Release
+		name    string
+		pattern VersionPattern
+		want    Release
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Simple pattern",
+			pattern: newVersionPattern("1.0.*-test.*"),
+			want:    newRelease("1.0.0-test.0"),
+		},
+		{
+			name:    "Simple pattern",
+			pattern: newVersionPattern("1.*.0"),
+			want:    newRelease("1.0.0"),
+		},
+		{
+			name:    "Simple pattern",
+			pattern: newVersionPattern("1.*.1"),
+			want:    newRelease("1.0.1"),
+		},
+		{
+			name:    "Simple pattern",
+			pattern: newVersionPattern("*.*.1"),
+			want:    newRelease("0.0.1"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := VersionPattern{
-				Release:    tt.fields.Release,
-				Prerelease: tt.fields.Prerelease,
-				Build:      tt.fields.Build,
-			}
-			if gotFirstRelease := v.FirstRelease(); !reflect.DeepEqual(gotFirstRelease, tt.wantFirstRelease) {
-				t.Errorf("VersionPattern.FirstRelease() = %v, want %v", gotFirstRelease, tt.wantFirstRelease)
-			}
+			got := tt.pattern.FirstRelease()
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestVersionPattern_FirstPrerelease(t *testing.T) {
-	type fields struct {
-		Release    ReleasePattern
-		Prerelease PRVersionPattern
-		Build      BuildMetadataPattern
-	}
+
 	tests := []struct {
-		name   string
-		fields fields
-		want   PRVersion
+		name    string
+		pattern VersionPattern
+		want    PRVersion
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Simple pattern",
+			pattern: newVersionPattern("1.0.0-test.*"),
+			want:    newPRVersion("1.0.0-test.0"),
+		},
+		{
+			name:    "Wildcard pattern",
+			pattern: newVersionPattern("1.0.0-*"),
+			want:    newPRVersion("1.0.0-0"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := VersionPattern{
-				Release:    tt.fields.Release,
-				Prerelease: tt.fields.Prerelease,
-				Build:      tt.fields.Build,
-			}
-			if got := v.FirstPrerelease(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("VersionPattern.FirstPrerelease() = %v, want %v", got, tt.want)
-			}
+			got := tt.pattern.FirstPrerelease()
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -153,6 +159,55 @@ func TestParseVersionPattern(t *testing.T) {
 			expectedPrerelease: PRVersionPattern{},
 			expectErr:          true,
 		},
+		{
+			name:               "Invalid Release Major Pattern",
+			pattern:            "A.2.3",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid Release Minor Pattern",
+			pattern:            "1.A.3",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid Release Patch Pattern",
+			pattern:            "1.2.A",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid Prerelease Pattern",
+			pattern:            "1.2.3-!",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid Empty Prerelease Pattern",
+			pattern:            "1.2.3-",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid leading zero Prerelease Pattern",
+			pattern:            "1.2.3-00",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
+		{
+			name:               "Invalid BuildMetadata Pattern",
+			pattern:            "1.2.3+!",
+			expectedRelease:    ReleasePattern{},
+			expectedPrerelease: PRVersionPattern{},
+			expectErr:          true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -177,4 +232,14 @@ func newVersionPattern(s string) VersionPattern {
 func newBuildMetadata(s string) BuildMetadata {
 	buildMetadata, _ := parseBuildMetadata(s)
 	return buildMetadata
+}
+
+func newPRVersion(s string) PRVersion {
+	prerelease, _ := parsePrerelease(s)
+	return prerelease
+}
+
+func newRelease(s string) Release {
+	release, _ := parseRelease(s)
+	return release
 }

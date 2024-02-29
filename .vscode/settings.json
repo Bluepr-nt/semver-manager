@@ -25,4 +25,5 @@
     "titleBar.inactiveForeground": "#15202b99"
   },
   "peacock.color": "#1cb3f7",
+  "files.autoSave": "onFocusChange",
 }
