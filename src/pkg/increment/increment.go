@@ -101,7 +101,7 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 // 	return incrementedVersion
 // }
 
-func NumericalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
+func NumericalPRIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
 	incrementedIdentifier := models.PRIdentifier{}
 	sourceNumber, err := strconv.ParseUint(sourceIdentifier.String(), 10, 64)
 	if err != nil {
@@ -122,13 +122,14 @@ func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdent
 	}
 
 	sourceRunes := []rune(sourceChar)
-	// Add support for caps
-	if sourceRunes[0] < 'a' || sourceRunes[0] > 'z' {
+	if (sourceRunes[0] < 'a' || sourceRunes[0] > 'z') && (sourceRunes[0] < 'A' || sourceRunes[0] > 'Z') {
 		return incrementedIdentifier, fmt.Errorf("expected an alphabetical identifier")
 	}
 
 	if sourceRunes[0] == 'z' {
-		sourceRunes[0] = 'a'
+		sourceRunes = append(sourceRunes, 'a')
+	} else if sourceRunes[0] == 'Z' {
+		sourceRunes = append(sourceRunes, 'A')
 	} else {
 		sourceRunes[0]++
 	}
@@ -139,6 +140,6 @@ func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdent
 
 func PromoteVersion(sourceVersion models.Version, targetStream models.VersionPattern) models.Version {
 	promotedVersion := models.Version{}
-
+	// TODOS
 	return promotedVersion
 }

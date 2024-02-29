@@ -11,3 +11,7 @@ func NewVersionPattern(s string) models.VersionPattern {
 	v, _ := models.ParseVersionPattern(s)
 	return v
 }
+func NewPRIdentifier(s string) models.PRIdentifier {
+	prIdentifier, _ := models.ParsePrIdentifier(s)
+	return prIdentifier
+}
