@@ -41,18 +41,15 @@ func GetIncrementType(highestRelease models.Version, comparedTo models.Version) 
 }
 
 func IncrementRelease(sourceVersion models.Version, increment models.Increment) models.Version {
-	incrementedVersion := models.Version{}
+	incrementedVersion := sourceVersion
 	if increment == models.Major {
 		incrementedVersion.Release.Major = sourceVersion.Release.Major + 1
 		incrementedVersion.Release.Minor = 0
 		incrementedVersion.Release.Patch = 0
 	} else if increment == models.Minor {
-		incrementedVersion.Release.Major = sourceVersion.Release.Major
 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor + 1
 		incrementedVersion.Release.Patch = 0
 	} else if increment == models.Patch {
-		incrementedVersion.Release.Major = sourceVersion.Release.Major
-		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch + 1
 	}
 	return incrementedVersion
@@ -103,7 +100,7 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 
 func NumericalPRIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
 	incrementedIdentifier := models.PRIdentifier{}
-	sourceNumber, err := strconv.ParseUint(sourceIdentifier.String(), 10, 64)
+	sourceNumber, err := strconv.ParseUint(sourceIdentifier.Value(), 10, 64)
 	if err != nil {
 		return incrementedIdentifier, err
 	}
@@ -116,7 +113,7 @@ func NumericalPRIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdenti
 func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
 	incrementedIdentifier := models.PRIdentifier{}
 
-	sourceChar := sourceIdentifier.String()
+	sourceChar := sourceIdentifier.Value()
 	if len(sourceChar) != 1 {
 		return incrementedIdentifier, fmt.Errorf("expected a single character identifier")
 	}
@@ -138,8 +135,51 @@ func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdent
 	return incrementedIdentifier, nil
 }
 
-func PromoteVersion(sourceVersion models.Version, targetStream models.VersionPattern) models.Version {
-	promotedVersion := models.Version{}
-	// TODOS
+func PromotePRVersion(sourceVersion models.Version, targetStream models.VersionPattern, versionList []models.Version) models.Version {
+	// sourceVersion needs to be a Prerelease version
+	// TODO validate
+
+	// get the highest version on the stream
+	highestStreamVersion, _ := filter.GetHighestStreamVersion(versionList, targetStream)
+	// Calculate increment of current version vs highest release on target stream
+	// increment := GetIncrementType(highestStreamVersion, sourceVersion)
+
+	// Translate version to target stream
+	translatedVersion := sourceVersion
+	for i, targetId := range targetStream.Build.Identifiers {
+		if (len(sourceVersion.Prerelease.Identifiers) - 1) < i {
+			if targetId.Value() == models.Wildcard {
+				newId := models.PRIdentifier{}
+				newId.Set("0")
+				translatedVersion.Prerelease.Identifiers = append(translatedVersion.Prerelease.Identifiers, newId)
+			}
+		} else if targetId.Value() == sourceVersion.Prerelease.Identifiers[i].Value() {
+			continue
+		} else if targetId.Value() == models.Wildcard {
+			continue
+		} else if targetId.Value() > sourceVersion.Prerelease.Identifiers[i].Value() {
+			translatedVersion.Prerelease.Identifiers[i].Set(targetId.Value())
+		}
+	}
+	// compare translated version to highest version
+	for i, identifier := range highestStreamVersion.Prerelease.Identifiers {
+		if (len(translatedVersion.Prerelease.Identifiers) - 1) < i {
+			translatedVersion.Prerelease.Identifiers = append(translatedVersion.Prerelease.Identifiers, highestStreamVersion.Prerelease.Identifiers[i])
+		} else if identifier.IsHigherThan(sourceVersion.Prerelease.Identifiers[i]) {
+			sourceVersion.Prerelease.Identifiers[i] = identifier
+		}
+
+		if (len(highestStreamVersion.Prerelease.Identifiers) - 1) > i {
+			if !translatedVersion.IsHigherThan(highestStreamVersion) {
+				translatedVersion.Prerelease.Identifiers[i] = identifier
+			}
+		}
+	}
+
+	promotedVersion := translatedVersion
+
+	// highestReleaseOnStream := filter.GetHighestStreamVersion()
+	// existingIncrement := GetIncrementType(highestReleaseOnStream, sourceVersion)
+
 	return promotedVersion
 }

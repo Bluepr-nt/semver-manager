@@ -267,7 +267,7 @@ func TestPRIdentifier_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.i.String()
+			got := tt.i.Value()
 			assert.Equal(t, tt.want, got, "PRIdentifier.String() = %v, want %v", got, tt.want)
 		})
 	}

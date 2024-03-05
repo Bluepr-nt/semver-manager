@@ -248,7 +248,7 @@ type PRIdentifier struct {
 	identifier string
 }
 
-func (i PRIdentifier) String() string {
+func (i PRIdentifier) Value() string {
 	return i.identifier
 }
 

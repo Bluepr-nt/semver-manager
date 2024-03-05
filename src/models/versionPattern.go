@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const wildcard = "*"
+const Wildcard = "*"
 
 type VersionPattern struct {
 	Release    ReleasePattern
@@ -76,7 +76,7 @@ func (v VersionPattern) FirstBuildMetadata() BuildMetadata {
 }
 
 func getAbsoluteValue(patten Pattern) string {
-	if patten.value == wildcard {
+	if patten.value == Wildcard {
 		return "0"
 	}
 	return patten.value
@@ -147,7 +147,7 @@ func (i *PRIdentifierPattern) Set(pattern string) error {
 		return nil
 	}
 
-	if pattern == wildcard {
+	if pattern == Wildcard {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}
@@ -211,7 +211,7 @@ func parsePatchPattern(pattern string) (PatchPattern, error) {
 
 func parseDigitsPattern(pattern string, increment Increment) (Pattern, error) {
 	if err := versionDigitsCompliance(pattern, increment); err != nil {
-		if pattern == wildcard {
+		if pattern == Wildcard {
 			return Pattern{value: pattern}, nil
 		} else {
 			return Pattern{}, err
@@ -254,7 +254,7 @@ func (i *BuildIdentifierPattern) Set(pattern string) error {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}
-	if pattern == wildcard {
+	if pattern == Wildcard {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}

@@ -167,6 +167,18 @@ func TestGetHighestStreamVersion(t *testing.T) {
 			want:    testutils.NewVersion("1.3.3"),
 			wantErr: false,
 		},
+		{
+			name: "Matching version with Prerelease Identifier",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.1.1-alpha"),
+					testutils.NewVersion("1.2.2-alpha"),
+					testutils.NewVersion("1.3.3"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*-alpha")},
+			want:    testutils.NewVersion("1.2.2-alpha"),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

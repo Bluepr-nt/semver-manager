@@ -155,20 +155,40 @@ func TestCalculateIncrementTypeForNewPrerelease(t *testing.T) {
 }
 
 func TestIncrementRelease(t *testing.T) {
-	type args struct {
+	tests := []struct {
+		name          string
 		sourceVersion models.Version
 		increment     models.Increment
-	}
-	tests := []struct {
-		name string
-		args args
-		want models.Version
+		want          models.Version
 	}{
-		// TODO: Add test cases.
+		{
+			name:          "Major increment",
+			sourceVersion: testutils.NewVersion("1.0.0"),
+			increment:     models.Major,
+			want:          testutils.NewVersion("2.0.0"),
+		},
+		{
+			name:          "Minor increment",
+			sourceVersion: testutils.NewVersion("1.0.0"),
+			increment:     models.Minor,
+			want:          testutils.NewVersion("1.1.0"),
+		},
+		{
+			name:          "Patch increment",
+			sourceVersion: testutils.NewVersion("1.0.0"),
+			increment:     models.Patch,
+			want:          testutils.NewVersion("1.0.1"),
+		},
+		{
+			name:          "None increment",
+			sourceVersion: testutils.NewVersion("1.0.0"),
+			increment:     models.None,
+			want:          testutils.NewVersion("1.0.0"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IncrementRelease(tt.args.sourceVersion, tt.args.increment)
+			got := IncrementRelease(tt.sourceVersion, tt.increment)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -378,21 +398,59 @@ func TestAlphabeticalIncrement(t *testing.T) {
 	}
 }
 
-func TestPromoteVersion(t *testing.T) {
-	type args struct {
+func TestPromotePRVersion(t *testing.T) {
+
+	tests := []struct {
+		name          string
 		sourceVersion models.Version
 		targetStream  models.VersionPattern
-	}
-	tests := []struct {
-		name string
-		args args
-		want models.Version
+		versions      []models.Version
+		want          models.Version
 	}{
-		// TODO: Add test cases.
+		{
+			name:          "Promote from Alpha to Beta with digit",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha.1"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.0"),
+				testutils.NewVersion("1.0.0-Beta.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta.1"),
+		},
+		{
+			name:          "Promote from Alpha to Patch Release",
+			sourceVersion: testutils.NewVersion("1.0.1-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha"),
+				testutils.NewVersion("1.0.0-Beta"),
+				testutils.NewVersion("1.0.0"),
+			},
+			want: testutils.NewVersion("1.0.1"),
+		},
+		{
+			name:          "Promote from Alpha to Beta with digit first version on stream",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha.1"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta.0"),
+		},
+		{
+			name:          "Promote from Alpha to Beta -- no digit",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta"),
+			versions: []models.Version{
+				testutils.NewVersion("0.1.0-Alpha"),
+				testutils.NewVersion("0.1.0-Beta"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := PromoteVersion(tt.args.sourceVersion, tt.args.targetStream)
+			got := PromotePRVersion(tt.sourceVersion, tt.targetStream, tt.versions)
 			assert.Equal(t, tt.want, got)
 		})
 	}

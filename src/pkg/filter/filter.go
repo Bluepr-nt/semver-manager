@@ -102,7 +102,7 @@ func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelea
 	}
 
 	for i, prIdentifierPattern := range prIdentifiersPattern {
-		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].String() {
+		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].Value() {
 			return false
 		}
 	}
