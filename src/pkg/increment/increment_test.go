@@ -137,7 +137,7 @@ func TestCalculateIncrementTypeForNewPrerelease(t *testing.T) {
 			want: models.None,
 		},
 		{
-			name: "Major increment",
+			name: "Minor increment",
 			args: args{
 				highestRelease:     testutils.NewVersion("1.0.0"),
 				highestPrerelease:  testutils.NewVersion("1.0.1-alpha"),
@@ -274,16 +274,17 @@ func TestIncrementReleaseFromStream(t *testing.T) {
 			name: "Weird version",
 			args: args{
 				sourceVersions: []models.Version{
-					{Release: models.Release{Major: 2, Minor: 1, Patch: 000000000000000000000000}},
+					testutils.NewVersion("2.1.000000000000000000000000"),
 					testutils.NewVersion("2.0.0"),
 				},
 				streamPattern: testutils.NewVersionPattern("2.*.*"),
 				increment:     models.Patch,
 			},
-			want:    testutils.NewVersion("2.1.1"),
+			want:    testutils.NewVersion("2.0.1"),
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := IncrementReleaseFromStream(tt.args.sourceVersions, tt.args.streamPattern, tt.args.increment)

@@ -94,11 +94,12 @@ func TestNewVersion(t *testing.T) {
 		{
 			name:  "Valid Version",
 			input: "1.0.0-beta",
+
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 				BuildMetadata: BuildMetadata{},
@@ -110,9 +111,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0-beta+0000044ttt",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "0000044ttt"}}},
@@ -124,9 +125,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0+0000044ttt",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "0000044ttt"}}},
@@ -138,9 +139,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{},
 				BuildMetadata: BuildMetadata{},
@@ -218,9 +219,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0-beta-.1.-",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease: PRVersion{Identifiers: []PRIdentifier{
 					{identifier: "beta-"},
@@ -282,7 +283,7 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Full version",
 			v: Version{
-				Release:       Release{Major: 1, Minor: 2, Patch: 3},
+				Release:       Release{Major: ReleaseDigit{value: 1}, Minor: ReleaseDigit{value: 2}, Patch: ReleaseDigit{value: 3}},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "alpha"}}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "001"}}},
 			},
@@ -291,14 +292,14 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Release only",
 			v: Version{
-				Release: Release{Major: 1, Minor: 0, Patch: 0},
+				Release: Release{Major: ReleaseDigit{value: 1}, Minor: ReleaseDigit{value: 0}, Patch: ReleaseDigit{value: 0}},
 			},
 			want: "1.0.0",
 		},
 		{
 			name: "Release and prerelease",
 			v: Version{
-				Release:    Release{Major: 2, Minor: 0, Patch: 0},
+				Release:    Release{Major: ReleaseDigit{value: 2}, Minor: ReleaseDigit{value: 0}, Patch: ReleaseDigit{value: 0}},
 				Prerelease: PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 			},
 			want: "2.0.0-beta",
@@ -306,7 +307,7 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Release and build metadata",
 			v: Version{
-				Release:       Release{Major: 3, Minor: 1, Patch: 4},
+				Release:       Release{Major: ReleaseDigit{value: 3}, Minor: ReleaseDigit{value: 1}, Patch: ReleaseDigit{value: 4}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "123456"}}},
 			},
 			want: "3.1.4+123456",

@@ -13,13 +13,42 @@ const (
 )
 
 type Release struct {
-	Major uint64
-	Minor uint64
-	Patch uint64
+	Major ReleaseDigit
+	Minor ReleaseDigit
+	Patch ReleaseDigit
+}
+
+type ReleaseDigit struct {
+	value uint64
+}
+
+func (r ReleaseDigit) String() string {
+	stringValue := fmt.Sprintf("%d", r.value)
+	return stringValue
+}
+
+func (r ReleaseDigit) Value() uint64 {
+	return r.value
+}
+
+func (r *ReleaseDigit) Set(d uint64) {
+	r.value = d
+}
+
+func (r *ReleaseDigit) Increment() {
+	r.value = r.value + 1
+}
+
+func (r ReleaseDigit) GT(cmp ReleaseDigit) bool {
+	return r.value > cmp.value
+}
+
+func (r ReleaseDigit) LT(cmp ReleaseDigit) bool {
+	return r.value < cmp.value
 }
 
 func (r *Release) String() string {
-	return fmt.Sprintf("%d.%d.%d", r.Major, r.Minor, r.Patch)
+	return fmt.Sprintf("%d.%d.%d", r.Major.value, r.Minor.value, r.Patch.value)
 }
 
 type Version struct {
@@ -116,9 +145,9 @@ func parseRelease(v string) (Release, error) {
 		return Release{}, err
 	}
 	return Release{
-		Major: majorUint,
-		Minor: minorUint,
-		Patch: patchUint,
+		Major: ReleaseDigit{value: majorUint},
+		Minor: ReleaseDigit{minorUint},
+		Patch: ReleaseDigit{patchUint},
 	}, nil
 }
 
@@ -361,13 +390,13 @@ func SplitVersions(stringVersions string) (versionStringSlice []string) {
 
 func (v Version) IsHigherThan(versionB Version) bool {
 	if v.Release.Major != versionB.Release.Major {
-		return v.Release.Major > versionB.Release.Major
+		return v.Release.Major.GT(versionB.Release.Major)
 	}
 	if v.Release.Minor != versionB.Release.Minor {
-		return v.Release.Minor > versionB.Release.Minor
+		return v.Release.Minor.GT(versionB.Release.Minor)
 	}
 	if v.Release.Patch != versionB.Release.Patch {
-		return v.Release.Patch > versionB.Release.Patch
+		return v.Release.Patch.GT(versionB.Release.Patch)
 	}
 
 	if v.IsRelease() && versionB.IsRelease() {
@@ -384,6 +413,8 @@ func (v Version) IsHigherThan(versionB Version) bool {
 		}
 		if !identifier.IsEqualTo(versionB.Prerelease.Identifiers[index]) {
 			return identifier.IsHigherThan(versionB.Prerelease.Identifiers[index])
+		} else if (len(v.Prerelease.Identifiers) - 1) == index {
+			return false
 		}
 	}
 	return true

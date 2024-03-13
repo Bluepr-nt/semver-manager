@@ -179,34 +179,34 @@ func parseReleasePattern(pattern string) (ReleasePattern, error) {
 	}, nil
 }
 
-func parseMajorPattern(pattern string) (MajorPattern, error) {
+func parseMajorPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 2)
 	majorPattern := tokens[0]
 	p, err := parseDigitsPattern(majorPattern, Major)
 	if err != nil {
-		return MajorPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return MajorPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
-func parseMinorPattern(pattern string) (MinorPattern, error) {
+func parseMinorPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	minor := tokens[1]
 	p, err := parseDigitsPattern(minor, Minor)
 	if err != nil {
-		return MinorPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return MinorPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
-func parsePatchPattern(pattern string) (PatchPattern, error) {
+func parsePatchPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	patch := tokens[2]
 	p, err := parseDigitsPattern(patch, Patch)
 	if err != nil {
-		return PatchPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return PatchPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
 func parseDigitsPattern(pattern string, increment Increment) (Pattern, error) {
@@ -262,33 +262,17 @@ func (i *BuildIdentifierPattern) Set(pattern string) error {
 }
 
 type ReleasePattern struct {
-	Major MajorPattern
-	Minor MinorPattern
-	Patch PatchPattern
+	Major ReleaseDigitPattern
+	Minor ReleaseDigitPattern
+	Patch ReleaseDigitPattern
 }
 
-type MajorPattern struct {
+type ReleaseDigitPattern struct {
 	pattern Pattern
 }
 
-func (m MajorPattern) Value() string {
+func (m ReleaseDigitPattern) Value() string {
 	return m.pattern.value
-}
-
-type MinorPattern struct {
-	pattern Pattern
-}
-
-func (m MinorPattern) Value() string {
-	return m.pattern.value
-}
-
-type PatchPattern struct {
-	pattern Pattern
-}
-
-func (p PatchPattern) Value() string {
-	return p.pattern.value
 }
 
 type PRVersionPattern struct {

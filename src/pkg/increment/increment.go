@@ -30,11 +30,11 @@ func CalculateIncrementTypeForNewPrerelease(highestRelease models.Version, highe
 }
 
 func GetIncrementType(highestRelease models.Version, comparedTo models.Version) models.Increment {
-	if highestRelease.Release.Major < comparedTo.Release.Major {
+	if highestRelease.Release.Major.LT(comparedTo.Release.Major) {
 		return models.Major
-	} else if highestRelease.Release.Minor < comparedTo.Release.Minor {
+	} else if highestRelease.Release.Minor.LT(comparedTo.Release.Minor) {
 		return models.Minor
-	} else if highestRelease.Release.Patch < comparedTo.Release.Patch {
+	} else if highestRelease.Release.Patch.LT(comparedTo.Release.Patch) {
 		return models.Patch
 	}
 	return models.None
@@ -43,14 +43,14 @@ func GetIncrementType(highestRelease models.Version, comparedTo models.Version) 
 func IncrementRelease(sourceVersion models.Version, increment models.Increment) models.Version {
 	incrementedVersion := sourceVersion
 	if increment == models.Major {
-		incrementedVersion.Release.Major = sourceVersion.Release.Major + 1
-		incrementedVersion.Release.Minor = 0
-		incrementedVersion.Release.Patch = 0
+		incrementedVersion.Release.Major.Set(sourceVersion.Release.Major.Value() + 1)
+		incrementedVersion.Release.Minor.Set(0)
+		incrementedVersion.Release.Patch.Set(0)
 	} else if increment == models.Minor {
-		incrementedVersion.Release.Minor = sourceVersion.Release.Minor + 1
-		incrementedVersion.Release.Patch = 0
+		incrementedVersion.Release.Minor.Set(sourceVersion.Release.Minor.Value() + 1)
+		incrementedVersion.Release.Patch.Set(0)
 	} else if increment == models.Patch {
-		incrementedVersion.Release.Patch = sourceVersion.Release.Patch + 1
+		incrementedVersion.Release.Patch.Set(sourceVersion.Release.Patch.Value() + 1)
 	}
 	return incrementedVersion
 }
@@ -97,6 +97,20 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 // 	}
 // 	return incrementedVersion
 // }
+
+func PRIdentifierIncrement(sourceId models.PRIdentifier) (newId models.PRIdentifier) {
+	if isStringNumeric(sourceId.Value()) {
+		newId, _ = NumericalPRIncrement(sourceId)
+	} else {
+		newId, _ = AlphabeticalIncrement(sourceId)
+	}
+	return newId
+}
+
+func isStringNumeric(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
+}
 
 func NumericalPRIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
 	incrementedIdentifier := models.PRIdentifier{}
@@ -145,41 +159,91 @@ func PromotePRVersion(sourceVersion models.Version, targetStream models.VersionP
 	// increment := GetIncrementType(highestStreamVersion, sourceVersion)
 
 	// Translate version to target stream
-	translatedVersion := sourceVersion
-	for i, targetId := range targetStream.Build.Identifiers {
-		if (len(sourceVersion.Prerelease.Identifiers) - 1) < i {
-			if targetId.Value() == models.Wildcard {
-				newId := models.PRIdentifier{}
-				newId.Set("0")
-				translatedVersion.Prerelease.Identifiers = append(translatedVersion.Prerelease.Identifiers, newId)
-			}
-		} else if targetId.Value() == sourceVersion.Prerelease.Identifiers[i].Value() {
-			continue
-		} else if targetId.Value() == models.Wildcard {
-			continue
-		} else if targetId.Value() > sourceVersion.Prerelease.Identifiers[i].Value() {
-			translatedVersion.Prerelease.Identifiers[i].Set(targetId.Value())
-		}
-	}
+	promotedToStream := promoteToTargetStream(targetStream, sourceVersion)
 	// compare translated version to highest version
-	for i, identifier := range highestStreamVersion.Prerelease.Identifiers {
-		if (len(translatedVersion.Prerelease.Identifiers) - 1) < i {
-			translatedVersion.Prerelease.Identifiers = append(translatedVersion.Prerelease.Identifiers, highestStreamVersion.Prerelease.Identifiers[i])
-		} else if identifier.IsHigherThan(sourceVersion.Prerelease.Identifiers[i]) {
-			sourceVersion.Prerelease.Identifiers[i] = identifier
-		}
-
-		if (len(highestStreamVersion.Prerelease.Identifiers) - 1) > i {
-			if !translatedVersion.IsHigherThan(highestStreamVersion) {
-				translatedVersion.Prerelease.Identifiers[i] = identifier
-			}
-		}
-	}
-
-	promotedVersion := translatedVersion
+	promotedVersion := promoteVersionAbove(highestStreamVersion, promotedToStream)
 
 	// highestReleaseOnStream := filter.GetHighestStreamVersion()
 	// existingIncrement := GetIncrementType(highestReleaseOnStream, sourceVersion)
 
 	return promotedVersion
+}
+
+func promoteVersionAbove(highestStreamVersion models.Version, promotedToStream models.Version) models.Version {
+	for i, identifier := range highestStreamVersion.Prerelease.Identifiers {
+		// if current index is bigger than promoted stream ids
+		if (len(promotedToStream.Prerelease.Identifiers) - 1) < i {
+			promotedToStream.Prerelease.Identifiers = append(promotedToStream.Prerelease.Identifiers, highestStreamVersion.Prerelease.Identifiers[i])
+
+			// if current id is bigger than promoted version
+		} else if identifier.IsHigherThan(promotedToStream.Prerelease.Identifiers[i]) {
+			promotedToStream.Prerelease.Identifiers[i] = identifier
+		}
+
+		//  if current id is the last
+		if (len(highestStreamVersion.Prerelease.Identifiers) - 1) == i {
+			if !promotedToStream.IsHigherThan(highestStreamVersion) {
+				newId := PRIdentifierIncrement(identifier)
+				promotedToStream.Prerelease.Identifiers[i] = newId
+			}
+		}
+	}
+
+	return promotedToStream
+}
+
+func promoteToTargetStream(targetStream models.VersionPattern, sourceVersion models.Version) (promotedVersion models.Version) {
+
+	promotedVersion.Release = promoteToTargetStreamRelease(targetStream.Release, sourceVersion.Release)
+
+	if !targetStream.IsReleaseOnlyPattern() {
+		promotedVersion.Prerelease = promoteToTargetPrereleaseStream(targetStream.Prerelease.Identifiers, sourceVersion, promotedVersion)
+	}
+
+	return promotedVersion
+}
+
+func promoteToTargetPrereleaseStream(targetStream []models.PRIdentifierPattern, sourceVersion models.Version, promotedVersion models.Version) models.PRVersion {
+	// todo refactor
+	for i, targetId := range targetStream {
+		if (len(sourceVersion.Prerelease.Identifiers) - 1) < i {
+			if targetId.Value() == models.Wildcard {
+				newId := models.PRIdentifier{}
+				newId.Set("0")
+				promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
+			}
+		} else if targetId.Value() == sourceVersion.Prerelease.Identifiers[i].Value() {
+			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, sourceVersion.Prerelease.Identifiers[i])
+		} else if targetId.Value() == models.Wildcard && ((len(targetStream) - 1) == i) {
+			newId := models.PRIdentifier{}
+			newId.Set("0")
+			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
+		} else if targetId.Value() != models.Wildcard {
+
+			newId := models.PRIdentifier{}
+			newId.Set(targetId.Value())
+			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
+		}
+	}
+	return promotedVersion.Prerelease
+}
+
+func promoteToTargetStreamRelease(targetStreamRelease models.ReleasePattern, sourceRelease models.Release) (newRelease models.Release) {
+
+	newRelease.Major = promotoToStreamReleaseDigit(targetStreamRelease.Major, sourceRelease.Major)
+	newRelease.Minor = promotoToStreamReleaseDigit(targetStreamRelease.Minor, sourceRelease.Minor)
+	newRelease.Patch = promotoToStreamReleaseDigit(targetStreamRelease.Patch, sourceRelease.Patch)
+
+	return newRelease
+}
+
+func promotoToStreamReleaseDigit(targetStream models.ReleaseDigitPattern, sourceDigit models.ReleaseDigit) (newDigit models.ReleaseDigit) {
+	if targetStream.Value() == models.Wildcard {
+		newDigit.Set(sourceDigit.Value())
+	} else {
+		var rawDigit uint64
+		rawDigit, _ = strconv.ParseUint(targetStream.Value(), 10, 64)
+		newDigit.Set(rawDigit)
+	}
+	return newDigit
 }

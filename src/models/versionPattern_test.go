@@ -140,9 +140,9 @@ func TestParseVersionPattern(t *testing.T) {
 			name:    "Valid Version Pattern",
 			pattern: "1.2.3-alpha.1",
 			expectedRelease: ReleasePattern{
-				Major: MajorPattern{Pattern{"1"}},
-				Minor: MinorPattern{Pattern{"2"}},
-				Patch: PatchPattern{Pattern{"3"}},
+				Major: ReleaseDigitPattern{Pattern{"1"}},
+				Minor: ReleaseDigitPattern{Pattern{"2"}},
+				Patch: ReleaseDigitPattern{Pattern{"3"}},
 			},
 			expectedPrerelease: PRVersionPattern{
 				Identifiers: []PRIdentifierPattern{

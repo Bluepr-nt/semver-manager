@@ -59,13 +59,13 @@ func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if pattern.Release.Major.Value() != "*" && version.Release.Major != toUint(pattern.Release.Major.Value()) {
+			if pattern.Release.Major.Value() != "*" && version.Release.Major.String() != pattern.Release.Major.Value() {
 				continue
 			}
-			if pattern.Release.Minor.Value() != "*" && version.Release.Minor != toUint(pattern.Release.Minor.Value()) {
+			if pattern.Release.Minor.Value() != "*" && version.Release.Minor.String() != pattern.Release.Minor.Value() {
 				continue
 			}
-			if pattern.Release.Patch.Value() != "*" && version.Release.Patch != toUint(pattern.Release.Patch.Value()) {
+			if pattern.Release.Patch.Value() != "*" && version.Release.Patch.String() != pattern.Release.Patch.Value() {
 				continue
 			}
 			if len(pattern.Prerelease.Identifiers) > 0 && !matchPrerelease(pattern.Prerelease.Identifiers, version.Prerelease) {
