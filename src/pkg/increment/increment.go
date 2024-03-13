@@ -204,25 +204,21 @@ func promoteToTargetStream(targetStream models.VersionPattern, sourceVersion mod
 }
 
 func promoteToTargetPrereleaseStream(targetStream []models.PRIdentifierPattern, sourceVersion models.Version, promotedVersion models.Version) models.PRVersion {
-	// todo refactor
-	for i, targetId := range targetStream {
-		if (len(sourceVersion.Prerelease.Identifiers) - 1) < i {
-			if targetId.Value() == models.Wildcard {
-				newId := models.PRIdentifier{}
-				newId.Set("0")
-				promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
-			}
-		} else if targetId.Value() == sourceVersion.Prerelease.Identifiers[i].Value() {
-			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, sourceVersion.Prerelease.Identifiers[i])
-		} else if targetId.Value() == models.Wildcard && ((len(targetStream) - 1) == i) {
-			newId := models.PRIdentifier{}
-			newId.Set("0")
-			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
-		} else if targetId.Value() != models.Wildcard {
 
+	for i, targetId := range targetStream {
+		if targetId.Value() != models.Wildcard {
 			newId := models.PRIdentifier{}
 			newId.Set(targetId.Value())
 			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
+
+		} else if (len(sourceVersion.Prerelease.Identifiers) - 1) < i {
+			newId := models.PRIdentifier{}
+			newId.Set("0")
+			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
+
+		} else if (len(targetStream) - 1) >= i {
+			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, sourceVersion.Prerelease.Identifiers[i])
+
 		}
 	}
 	return promotedVersion.Prerelease
