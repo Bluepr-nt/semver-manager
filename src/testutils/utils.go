@@ -1,6 +1,8 @@
 package testutils
 
-import "src/cmd/smgr/models"
+import (
+	"src/cmd/smgr/models"
+)
 
 func NewVersion(s string) models.Version {
 	v, _ := models.ParseVersion(s)

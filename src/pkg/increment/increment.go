@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/pkg/filter"
+	"src/cmd/smgr/utils"
 	"strconv"
 )
 
@@ -99,17 +100,12 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 // }
 
 func PRIdentifierIncrement(sourceId models.PRIdentifier) (newId models.PRIdentifier) {
-	if isStringNumeric(sourceId.Value()) {
+	if utils.IsNumerical(sourceId.Value()) {
 		newId, _ = NumericalPRIncrement(sourceId)
 	} else {
 		newId, _ = AlphabeticalIncrement(sourceId)
 	}
 	return newId
-}
-
-func isStringNumeric(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
 }
 
 func NumericalPRIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdentifier, error) {
@@ -149,22 +145,25 @@ func AlphabeticalIncrement(sourceIdentifier models.PRIdentifier) (models.PRIdent
 	return incrementedIdentifier, nil
 }
 
-func PromotePRVersion(sourceVersion models.Version, targetStream models.VersionPattern, versionList []models.Version) models.Version {
+func PromotePRVersion(sourceVersion models.Version, targetStream models.VersionPattern, versionList []models.Version) (promotedVersion models.Version) {
 	// sourceVersion needs to be a Prerelease version
 	// TODO validate
 
-	// get the highest version on the stream
-	highestStreamVersion, _ := filter.GetHighestStreamVersion(versionList, targetStream)
 	// Calculate increment of current version vs highest release on target stream
 	// increment := GetIncrementType(highestStreamVersion, sourceVersion)
 
 	// Translate version to target stream
 	promotedToStream := promoteToTargetStream(targetStream, sourceVersion)
-	// compare translated version to highest version
-	promotedVersion := promoteVersionAbove(highestStreamVersion, promotedToStream)
 
-	// highestReleaseOnStream := filter.GetHighestStreamVersion()
-	// existingIncrement := GetIncrementType(highestReleaseOnStream, sourceVersion)
+	highestStreamVersion, err := filter.GetHighestStreamVersion(versionList, targetStream)
+	if _, ok := err.(*models.EmptyVersionListError); ok {
+		if utils.IsNumerical(promotedToStream.Prerelease.LastID().Value()) {
+			promotedToStream.Prerelease.Identifiers[len(promotedToStream.Prerelease.Identifiers)-1].Set("0")
+			promotedVersion = promotedToStream
+		}
+	} else {
+		promotedVersion = promoteVersionAbove(highestStreamVersion, promotedToStream)
+	}
 
 	return promotedVersion
 }

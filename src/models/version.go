@@ -219,6 +219,13 @@ type PRVersion struct {
 	Identifiers []PRIdentifier
 }
 
+func (pr PRVersion) LastID() PRIdentifier {
+	if len(pr.Identifiers) > 0 {
+		return pr.Identifiers[len(pr.Identifiers)-1]
+	}
+	return PRIdentifier{}
+}
+
 func (pr *PRVersion) String() string {
 	identifierList := []string{}
 	for _, identifier := range pr.Identifiers {
