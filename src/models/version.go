@@ -10,25 +10,55 @@ const (
 	numbers  string = "0123456789"
 	alphas          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 	alphanum        = alphas + numbers
-	Major           = "major"
-	Minor           = "minor"
-	Patch           = "patch"
 )
 
 type Release struct {
-	Major uint64
-	Minor uint64
-	Patch uint64
+	Major ReleaseDigit
+	Minor ReleaseDigit
+	Patch ReleaseDigit
+}
+
+type ReleaseDigit struct {
+	value uint64
+}
+
+func (r ReleaseDigit) String() string {
+	stringValue := fmt.Sprintf("%d", r.value)
+	return stringValue
+}
+
+func (r ReleaseDigit) Value() uint64 {
+	return r.value
+}
+
+func (r *ReleaseDigit) Set(d uint64) {
+	r.value = d
+}
+
+func (r *ReleaseDigit) Increment() {
+	r.value = r.value + 1
+}
+
+func (r ReleaseDigit) GT(cmp ReleaseDigit) bool {
+	return r.value > cmp.value
+}
+
+func (r ReleaseDigit) LT(cmp ReleaseDigit) bool {
+	return r.value < cmp.value
 }
 
 func (r *Release) String() string {
-	return fmt.Sprintf("%d.%d.%d", r.Major, r.Minor, r.Patch)
+	return fmt.Sprintf("%d.%d.%d", r.Major.value, r.Minor.value, r.Patch.value)
 }
 
 type Version struct {
 	Release       Release
 	Prerelease    PRVersion
 	BuildMetadata BuildMetadata
+}
+
+func (v Version) IsRelease() bool {
+	return len(v.Prerelease.Identifiers) < 1
 }
 
 func (v *Version) String() string {
@@ -115,9 +145,9 @@ func parseRelease(v string) (Release, error) {
 		return Release{}, err
 	}
 	return Release{
-		Major: majorUint,
-		Minor: minorUint,
-		Patch: patchUint,
+		Major: ReleaseDigit{value: majorUint},
+		Minor: ReleaseDigit{minorUint},
+		Patch: ReleaseDigit{patchUint},
 	}, nil
 }
 
@@ -189,6 +219,13 @@ type PRVersion struct {
 	Identifiers []PRIdentifier
 }
 
+func (pr PRVersion) LastID() PRIdentifier {
+	if len(pr.Identifiers) > 0 {
+		return pr.Identifiers[len(pr.Identifiers)-1]
+	}
+	return PRIdentifier{}
+}
+
 func (pr *PRVersion) String() string {
 	identifierList := []string{}
 	for _, identifier := range pr.Identifiers {
@@ -247,8 +284,16 @@ type PRIdentifier struct {
 	identifier string
 }
 
-func (i *PRIdentifier) String() string {
+func (i PRIdentifier) Value() string {
 	return i.identifier
+}
+
+func (i PRIdentifier) IsEqualTo(identifierB PRIdentifier) bool {
+	return i.identifier == identifierB.identifier
+}
+
+func (i PRIdentifier) IsHigherThan(identifierB PRIdentifier) bool {
+	return i.identifier > identifierB.identifier
 }
 
 func ParsePrIdentifier(v string) (PRIdentifier, error) {
@@ -319,9 +364,9 @@ func (i *BuildIdentifier) Set(v string) error {
 	return nil
 }
 
-func versionDigitsCompliance(version, increment string) error {
-	if increment != "major" && increment != "minor" && increment != "patch" {
-		return fmt.Errorf("increment MUST be one of 'major', 'minor', or 'patch', got: %s", increment)
+func versionDigitsCompliance(version string, increment Increment) error {
+	if increment != Major && increment != Minor && increment != Patch {
+		return fmt.Errorf("increment MUST be one of %s, %s, or %s, got: %s", Major, Minor, Patch, increment)
 	}
 	if len(version) < 1 {
 		return fmt.Errorf("%s MUST NOT be empty, got: %s", increment, version)
@@ -338,10 +383,9 @@ func versionDigitsCompliance(version, increment string) error {
 	return nil
 }
 
-func SplitVersions(stringVersions string) []string {
+func SplitVersions(stringVersions string) (versionStringSlice []string) {
 	stringVersions = strings.TrimSpace(stringVersions)
 
-	versionStringSlice := []string{}
 	if strings.Contains(stringVersions, ",") {
 		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
 		versionStringSlice = strings.Split(stringVersions, ",")
@@ -349,4 +393,36 @@ func SplitVersions(stringVersions string) []string {
 		versionStringSlice = strings.Split(stringVersions, " ")
 	}
 	return versionStringSlice
+}
+
+func (v Version) IsHigherThan(versionB Version) bool {
+	if v.Release.Major != versionB.Release.Major {
+		return v.Release.Major.GT(versionB.Release.Major)
+	}
+	if v.Release.Minor != versionB.Release.Minor {
+		return v.Release.Minor.GT(versionB.Release.Minor)
+	}
+	if v.Release.Patch != versionB.Release.Patch {
+		return v.Release.Patch.GT(versionB.Release.Patch)
+	}
+
+	if v.IsRelease() && versionB.IsRelease() {
+		return false
+	}
+
+	if versionB.IsRelease() {
+		return false
+	}
+
+	for index, identifier := range v.Prerelease.Identifiers {
+		if len(versionB.Prerelease.Identifiers) <= index {
+			return true
+		}
+		if !identifier.IsEqualTo(versionB.Prerelease.Identifiers[index]) {
+			return identifier.IsHigherThan(versionB.Prerelease.Identifiers[index])
+		} else if (len(v.Prerelease.Identifiers) - 1) == index {
+			return false
+		}
+	}
+	return true
 }

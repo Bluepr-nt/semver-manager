@@ -2,14 +2,14 @@ package gitlab
 
 import (
 	"src/cmd/smgr/models"
-	"src/cmd/smgr/util"
+	"src/cmd/smgr/utils"
 )
 
 type GitlabClient struct {
-	config *util.DatasourceConfig
+	config *utils.DatasourceConfig
 }
 
-func NewFetcher(config *util.DatasourceConfig) *GitlabClient {
+func NewFetcher(config *utils.DatasourceConfig) *GitlabClient {
 	return &GitlabClient{config: config}
 }
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const wildcard = "*"
+const Wildcard = "*"
 
 type VersionPattern struct {
 	Release    ReleasePattern
@@ -13,6 +13,76 @@ type VersionPattern struct {
 	Build      BuildMetadataPattern
 }
 
+func (v VersionPattern) IsReleaseOnlyPattern() bool {
+	if v.IsEmpty() || len(v.Prerelease.Identifiers) > 0 {
+		return false
+	}
+	return true
+}
+
+func (v VersionPattern) IsEmpty() bool {
+	if v.Release.Major.Value() == "" &&
+		v.Release.Minor.Value() == "" &&
+		v.Release.Patch.Value() == "" &&
+		len(v.Prerelease.Identifiers) < 1 &&
+		len(v.Build.Identifiers) < 1 {
+		return true
+	}
+	return false
+}
+func (v VersionPattern) FirstVersion() (firstVersion Version) {
+	firstVersion.Release = v.FirstRelease()
+	firstVersion.Prerelease = v.FirstPrerelease()
+	firstVersion.BuildMetadata = v.FirstBuildMetadata()
+
+	return firstVersion
+}
+
+func (v VersionPattern) FirstRelease() (FirstRelease Release) {
+	major := getAbsoluteValue(v.Release.Major.pattern)
+	minor := getAbsoluteValue(v.Release.Minor.pattern)
+	patch := getAbsoluteValue(v.Release.Patch.pattern)
+
+	release, _ := parseRelease(fmt.Sprintf("%s.%s.%s", major, minor, patch))
+	return release
+}
+
+func (v VersionPattern) FirstPrerelease() PRVersion {
+	var rawPRVersion string
+	for i, identifier := range v.Prerelease.Identifiers {
+		rawId := getAbsoluteValue(identifier.pattern)
+		if i == 0 {
+			rawPRVersion = fmt.Sprintf("%s-%s", rawPRVersion, rawId)
+		} else {
+			rawPRVersion = fmt.Sprintf("%s.%s", rawPRVersion, rawId)
+		}
+	}
+	prVersion, _ := parsePrerelease(rawPRVersion)
+	return prVersion
+}
+
+func (v VersionPattern) FirstBuildMetadata() BuildMetadata {
+	var rawBuildMetadata string
+	for i, buildId := range v.Build.Identifiers {
+		rawId := getAbsoluteValue(buildId.pattern)
+		if i == 0 {
+			rawBuildMetadata = fmt.Sprintf("%s+%s", rawBuildMetadata, rawId)
+		} else {
+			rawBuildMetadata = fmt.Sprintf("%s.%s", rawBuildMetadata, rawId)
+		}
+	}
+	buildMetadata, _ := parseBuildMetadata(rawBuildMetadata)
+	return buildMetadata
+}
+
+func getAbsoluteValue(patten Pattern) string {
+	if patten.value == Wildcard {
+		return "0"
+	}
+	return patten.value
+}
+
+// func getAbsoluteIdentifiers
 func ParseVersionPattern(pattern string) (VersionPattern, error) {
 	release, err := parseReleasePattern(pattern)
 	if err != nil {
@@ -77,7 +147,7 @@ func (i *PRIdentifierPattern) Set(pattern string) error {
 		return nil
 	}
 
-	if pattern == wildcard {
+	if pattern == Wildcard {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}
@@ -109,39 +179,39 @@ func parseReleasePattern(pattern string) (ReleasePattern, error) {
 	}, nil
 }
 
-func parseMajorPattern(pattern string) (MajorPattern, error) {
+func parseMajorPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 2)
 	majorPattern := tokens[0]
 	p, err := parseDigitsPattern(majorPattern, Major)
 	if err != nil {
-		return MajorPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return MajorPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
-func parseMinorPattern(pattern string) (MinorPattern, error) {
+func parseMinorPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	minor := tokens[1]
 	p, err := parseDigitsPattern(minor, Minor)
 	if err != nil {
-		return MinorPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return MinorPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
-func parsePatchPattern(pattern string) (PatchPattern, error) {
+func parsePatchPattern(pattern string) (ReleaseDigitPattern, error) {
 	tokens := strings.SplitN(pattern, ".", 3)
 	patch := tokens[2]
 	p, err := parseDigitsPattern(patch, Patch)
 	if err != nil {
-		return PatchPattern{}, err
+		return ReleaseDigitPattern{}, err
 	}
-	return PatchPattern{pattern: p}, nil
+	return ReleaseDigitPattern{pattern: p}, nil
 }
 
-func parseDigitsPattern(pattern, increment string) (Pattern, error) {
+func parseDigitsPattern(pattern string, increment Increment) (Pattern, error) {
 	if err := versionDigitsCompliance(pattern, increment); err != nil {
-		if pattern == wildcard {
+		if pattern == Wildcard {
 			return Pattern{value: pattern}, nil
 		} else {
 			return Pattern{}, err
@@ -184,7 +254,7 @@ func (i *BuildIdentifierPattern) Set(pattern string) error {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}
-	if pattern == wildcard {
+	if pattern == Wildcard {
 		i.pattern = Pattern{value: pattern}
 		return nil
 	}
@@ -192,33 +262,17 @@ func (i *BuildIdentifierPattern) Set(pattern string) error {
 }
 
 type ReleasePattern struct {
-	Major MajorPattern
-	Minor MinorPattern
-	Patch PatchPattern
+	Major ReleaseDigitPattern
+	Minor ReleaseDigitPattern
+	Patch ReleaseDigitPattern
 }
 
-type MajorPattern struct {
+type ReleaseDigitPattern struct {
 	pattern Pattern
 }
 
-func (m MajorPattern) Value() string {
+func (m ReleaseDigitPattern) Value() string {
 	return m.pattern.value
-}
-
-type MinorPattern struct {
-	pattern Pattern
-}
-
-func (m MinorPattern) Value() string {
-	return m.pattern.value
-}
-
-type PatchPattern struct {
-	pattern Pattern
-}
-
-func (p PatchPattern) Value() string {
-	return p.pattern.value
 }
 
 type PRVersionPattern struct {

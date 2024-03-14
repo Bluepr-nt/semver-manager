@@ -102,11 +102,11 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			output := new(bytes.Buffer)
-			
+
 			filterCmd := filter.NewFilterCommand()
 			filterCmd.SetOut(output)
 			filterCmd.SetErr(output)
-			
+
 			cmd := NewFetchCommand(filterCmd)
 			cmd.SetOut(output)
 			cmd.SetErr(output)

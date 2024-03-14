@@ -3,6 +3,7 @@ package filter
 import (
 	"errors"
 	"src/cmd/smgr/models"
+	"src/cmd/smgr/testutils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,8 +19,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Simple tags list",
 			versions: []models.Version{
-				newVersion("0.0.0-1+054"),
-				newVersion("0.1.0-1+054"),
+				testutils.NewVersion("0.0.0-1+054"),
+				testutils.NewVersion("0.1.0-1+054"),
 			},
 			want:    "0.1.0-1+054",
 			wantErr: false,
@@ -27,8 +28,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Mixed release and prerelease versions",
 			versions: []models.Version{
-				newVersion("1.0.0"),
-				newVersion("0.0.0-2"),
+				testutils.NewVersion("1.0.0"),
+				testutils.NewVersion("0.0.0-2"),
 			},
 			want:    "1.0.0",
 			wantErr: false,
@@ -36,8 +37,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Prerelease identifiers with different lengths",
 			versions: []models.Version{
-				newVersion("0.1.0-alpha.2"),
-				newVersion("0.1.0-alpha"),
+				testutils.NewVersion("0.1.0-alpha.2"),
+				testutils.NewVersion("0.1.0-alpha"),
 			},
 			want:    "0.1.0-alpha.2",
 			wantErr: false,
@@ -45,8 +46,8 @@ func TestHighest(t *testing.T) {
 		{
 			name: "Versions with different build metadata",
 			versions: []models.Version{
-				newVersion("0.1.0+100"),
-				newVersion("0.1.0+200"),
+				testutils.NewVersion("0.1.0+100"),
+				testutils.NewVersion("0.1.0+200"),
 			},
 			want:    "0.1.0+100",
 			wantErr: false,
@@ -68,6 +69,127 @@ func TestHighest(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got[0].String())
+			}
+		})
+	}
+}
+
+func TestGetHighestStreamVersion(t *testing.T) {
+	type args struct {
+		versions      []models.Version
+		streamPattern models.VersionPattern
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    models.Version
+		wantErr bool
+	}{
+		{
+			name: "Highest version found",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("2.0.0"),
+					testutils.NewVersion("1.1.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+			want:    testutils.NewVersion("1.1.0"),
+			wantErr: false,
+		},
+		{
+			name: "No matching version",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("2.0.0"),
+					testutils.NewVersion("1.1.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("3.*.*")},
+			want:    models.Version{},
+			wantErr: true,
+		},
+		{
+			name: "Multiple matching versions, highest found",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("1.2.0"),
+					testutils.NewVersion("1.1.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+
+			want:    testutils.NewVersion("1.2.0"),
+			wantErr: false,
+		},
+		{
+			name: "No versions provided",
+			args: args{
+				versions:      []models.Version{},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+			want:    models.Version{},
+			wantErr: true,
+		},
+		{
+			name: "Only one matching version",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("2.0.0"),
+					testutils.NewVersion("1.0.0"),
+					testutils.NewVersion("3.0.0"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+			want:    testutils.NewVersion("1.0.0"),
+			wantErr: false,
+		},
+		{
+			name: "Matching version with highest patch",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.0.1"),
+					testutils.NewVersion("1.0.2"),
+					testutils.NewVersion("1.0.3"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+
+			want:    testutils.NewVersion("1.0.3"),
+			wantErr: false,
+		},
+		{
+			name: "Matching version with highest minor and patch",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.1.1"),
+					testutils.NewVersion("1.2.2"),
+					testutils.NewVersion("1.3.3"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*")},
+			want:    testutils.NewVersion("1.3.3"),
+			wantErr: false,
+		},
+		{
+			name: "Matching version with Prerelease Identifier",
+			args: args{
+				versions: []models.Version{
+					testutils.NewVersion("1.1.1-alpha"),
+					testutils.NewVersion("1.2.2-alpha"),
+					testutils.NewVersion("1.3.3"),
+				},
+				streamPattern: testutils.NewVersionPattern("1.*.*-alpha")},
+			want:    testutils.NewVersion("1.2.2-alpha"),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetHighestStreamVersion(tt.args.versions, tt.args.streamPattern)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, tt.want, got)
+
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
@@ -103,17 +225,17 @@ func TestApplyFilters(t *testing.T) {
 			name: "Apply multiple filters",
 			args: args{
 				versions: models.VersionSlice{
-					newVersion("1.2.3"),
-					newVersion("1.2.4"),
-					newVersion("2.3.4"),
+					testutils.NewVersion("1.2.3"),
+					testutils.NewVersion("1.2.4"),
+					testutils.NewVersion("2.3.4"),
 				},
 				filters: []FilterFunc{
-					VersionPatternFilter(newVersionPattern("1.2.*")),
+					VersionPatternFilter(testutils.NewVersionPattern("1.2.*")),
 					Highest(),
 				},
 			},
 			want: models.VersionSlice{
-				newVersion("1.2.4"),
+				testutils.NewVersion("1.2.4"),
 			},
 			wantErr: false,
 		},
@@ -121,12 +243,12 @@ func TestApplyFilters(t *testing.T) {
 			name: "No matching version after filters",
 			args: args{
 				versions: models.VersionSlice{
-					newVersion("1.2.3"),
-					newVersion("1.3.4"),
-					newVersion("2.3.4"),
+					testutils.NewVersion("1.2.3"),
+					testutils.NewVersion("1.3.4"),
+					testutils.NewVersion("2.3.4"),
 				},
 				filters: []FilterFunc{
-					VersionPatternFilter(newVersionPattern("4.*.*")),
+					VersionPatternFilter(testutils.NewVersionPattern("4.*.*")),
 				},
 			},
 			want:    nil,
@@ -136,11 +258,11 @@ func TestApplyFilters(t *testing.T) {
 			name: "Filter returns an error",
 			args: args{
 				versions: models.VersionSlice{
-					newVersion("1.2.3"),
-					newVersion("1.3.4"),
+					testutils.NewVersion("1.2.3"),
+					testutils.NewVersion("1.3.4"),
 				},
 				filters: []FilterFunc{
-					VersionPatternFilter(newVersionPattern("1.1.1")),
+					VersionPatternFilter(testutils.NewVersionPattern("1.1.1")),
 					alwaysError(),
 				},
 			},
@@ -175,118 +297,118 @@ func TestVersionPatternFilter(t *testing.T) {
 	}{
 		{
 			name:    "Exact match",
-			pattern: newVersionPattern("1.2.3-alpha.beta"),
+			pattern: testutils.NewVersionPattern("1.2.3-alpha.beta"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
 			},
 		},
 		{
 			name:    "Patch wildcard match",
-			pattern: newVersionPattern("1.2.*-alpha.beta"),
+			pattern: testutils.NewVersionPattern("1.2.*-alpha.beta"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.4-alpha.beta"),
-				newVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.4-alpha.beta"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.4-alpha.beta"),
 			},
 		},
 		{
 			name:    "Prerelease wildcard match",
-			pattern: newVersionPattern("1.2.3-alpha.*"),
+			pattern: testutils.NewVersionPattern("1.2.3-alpha.*"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha.gamma"),
-				newVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.gamma"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha.gamma"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.gamma"),
 			},
 		},
 		{
 			name:    "Multiple wildcard match",
-			pattern: newVersionPattern("*.*.*-alpha.*"),
+			pattern: testutils.NewVersionPattern("*.*.*-alpha.*"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha.gamma"),
-				newVersion("2.3.4-alpha.beta"),
-				newVersion("2.3.4-no-match.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.gamma"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("2.3.4-no-match.beta"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha.gamma"),
-				newVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.gamma"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
 			},
 		},
 		{
 			name:    "Build metadata exact match",
-			pattern: newVersionPattern("1.2.3-alpha.beta+20130313144700"),
+			pattern: testutils.NewVersionPattern("1.2.3-alpha.beta+20130313144700"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta+20130313144700"),
-				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
-				newVersion("2.3.4-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				testutils.NewVersion("2.3.4-alpha.beta+20130313144700"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+20130313144700"),
 			},
 		},
 		{
 			name:    "Build metadata empty",
-			pattern: newVersionPattern("*.*.*-alpha.beta"),
+			pattern: testutils.NewVersionPattern("*.*.*-alpha.beta"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta+20130313144700"),
-				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
-				newVersion("2.3.4-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				testutils.NewVersion("2.3.4-alpha.beta+20130313144700"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta+20130313144700"),
-				newVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
-				newVersion("2.3.4-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3-alpha.beta+exp.sha.5114f85"),
+				testutils.NewVersion("2.3.4-alpha.beta+20130313144700"),
 			},
 		},
 		{
 			name:    "Invalid pattern error",
-			pattern: newVersionPattern("1.2.3-alpha..beta"),
+			pattern: testutils.NewVersionPattern("1.2.3-alpha..beta"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha.gamma"),
-				newVersion("2.3.4-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.gamma"),
+				testutils.NewVersion("2.3.4-alpha.beta"),
 			},
 			want: nil,
 		},
 		{
 			name:    "Different lengths",
-			pattern: newVersionPattern("1.2.3-alpha.*"),
+			pattern: testutils.NewVersionPattern("1.2.3-alpha.*"),
 			versions: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-alpha"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
 			},
 		},
 		{
 			name:    "Release only",
-			pattern: newVersionPattern("*.*.*"),
+			pattern: testutils.NewVersionPattern("*.*.*"),
 			versions: []models.Version{
-				newVersion("1.2.3"),
-				newVersion("1.2.4"),
-				newVersion("1.2.3+exp.sha.5114f85"),
-				newVersion("1.2.3-alpha.beta"),
-				newVersion("1.2.3-beta"),
-				newVersion("1.2.3-alpha.beta+20130313144700"),
+				testutils.NewVersion("1.2.3"),
+				testutils.NewVersion("1.2.4"),
+				testutils.NewVersion("1.2.3+exp.sha.5114f85"),
+				testutils.NewVersion("1.2.3-alpha.beta"),
+				testutils.NewVersion("1.2.3-beta"),
+				testutils.NewVersion("1.2.3-alpha.beta+20130313144700"),
 			},
 			want: []models.Version{
-				newVersion("1.2.3"),
-				newVersion("1.2.4"),
-				newVersion("1.2.3+exp.sha.5114f85"),
+				testutils.NewVersion("1.2.3"),
+				testutils.NewVersion("1.2.4"),
+				testutils.NewVersion("1.2.3+exp.sha.5114f85"),
 			},
 		},
 	}
@@ -301,12 +423,12 @@ func TestVersionPatternFilter(t *testing.T) {
 	}
 }
 
-func newVersion(s string) models.Version {
-	v, _ := models.ParseVersion(s)
-	return v
-}
+// func NewVersion(s string) models.Version {
+// 	v, _ := models.ParseVersion(s)
+// 	return v
+// }
 
-func newVersionPattern(s string) models.VersionPattern {
-	v, _ := models.ParseVersionPattern(s)
-	return v
-}
+// func NewVersionPattern(s string) models.VersionPattern {
+// 	v, _ := models.ParseVersionPattern(s)
+// 	return v
+// }

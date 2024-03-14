@@ -7,14 +7,14 @@ import (
 	"src/cmd/smgr/datasource/gitlab"
 	"src/cmd/smgr/datasource/oci"
 	"src/cmd/smgr/models"
-	"src/cmd/smgr/util"
+	"src/cmd/smgr/utils"
 )
 
 type Fetcher interface {
 	FetchTags() ([]models.Version, error)
 }
 
-func NewFetcher(config *util.DatasourceConfig) (Fetcher, error) {
+func NewFetcher(config *utils.DatasourceConfig) (Fetcher, error) {
 	switch config.Platform {
 	case "github":
 		return github.NewFetcher(config), nil

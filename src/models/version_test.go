@@ -55,9 +55,6 @@ func TestNewBuildIdentifier(t *testing.T) {
 }
 
 func TestNewPrIdentifier(t *testing.T) {
-	type args struct {
-		v string
-	}
 	tests := []struct {
 		name    string
 		input   string
@@ -88,9 +85,6 @@ func TestNewPrIdentifier(t *testing.T) {
 }
 
 func TestNewVersion(t *testing.T) {
-	type args struct {
-		v string
-	}
 	tests := []struct {
 		name    string
 		input   string
@@ -100,11 +94,12 @@ func TestNewVersion(t *testing.T) {
 		{
 			name:  "Valid Version",
 			input: "1.0.0-beta",
+
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 				BuildMetadata: BuildMetadata{},
@@ -116,9 +111,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0-beta+0000044ttt",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "0000044ttt"}}},
@@ -130,9 +125,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0+0000044ttt",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "0000044ttt"}}},
@@ -144,9 +139,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease:    PRVersion{},
 				BuildMetadata: BuildMetadata{},
@@ -224,9 +219,9 @@ func TestNewVersion(t *testing.T) {
 			input: "1.0.0-beta-.1.-",
 			want: Version{
 				Release: Release{
-					Major: 1,
-					Minor: 0,
-					Patch: 0,
+					Major: ReleaseDigit{value: 1},
+					Minor: ReleaseDigit{value: 0},
+					Patch: ReleaseDigit{value: 0},
 				},
 				Prerelease: PRVersion{Identifiers: []PRIdentifier{
 					{identifier: "beta-"},
@@ -273,7 +268,7 @@ func TestPRIdentifier_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.i.String()
+			got := tt.i.Value()
 			assert.Equal(t, tt.want, got, "PRIdentifier.String() = %v, want %v", got, tt.want)
 		})
 	}
@@ -288,7 +283,7 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Full version",
 			v: Version{
-				Release:       Release{Major: 1, Minor: 2, Patch: 3},
+				Release:       Release{Major: ReleaseDigit{value: 1}, Minor: ReleaseDigit{value: 2}, Patch: ReleaseDigit{value: 3}},
 				Prerelease:    PRVersion{Identifiers: []PRIdentifier{{identifier: "alpha"}}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "001"}}},
 			},
@@ -297,14 +292,14 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Release only",
 			v: Version{
-				Release: Release{Major: 1, Minor: 0, Patch: 0},
+				Release: Release{Major: ReleaseDigit{value: 1}, Minor: ReleaseDigit{value: 0}, Patch: ReleaseDigit{value: 0}},
 			},
 			want: "1.0.0",
 		},
 		{
 			name: "Release and prerelease",
 			v: Version{
-				Release:    Release{Major: 2, Minor: 0, Patch: 0},
+				Release:    Release{Major: ReleaseDigit{value: 2}, Minor: ReleaseDigit{value: 0}, Patch: ReleaseDigit{value: 0}},
 				Prerelease: PRVersion{Identifiers: []PRIdentifier{{identifier: "beta"}}},
 			},
 			want: "2.0.0-beta",
@@ -312,7 +307,7 @@ func TestVersion_String(t *testing.T) {
 		{
 			name: "Release and build metadata",
 			v: Version{
-				Release:       Release{Major: 3, Minor: 1, Patch: 4},
+				Release:       Release{Major: ReleaseDigit{value: 3}, Minor: ReleaseDigit{value: 1}, Patch: ReleaseDigit{value: 4}},
 				BuildMetadata: BuildMetadata{Identifiers: []BuildIdentifier{{identifier: "123456"}}},
 			},
 			want: "3.1.4+123456",
@@ -326,50 +321,70 @@ func TestVersion_String(t *testing.T) {
 	}
 }
 
-func TestParseVersionPattern(t *testing.T) {
+func TestVersion_IsHigherThan(t *testing.T) {
+	type args struct {
+		versionB string
+	}
 	tests := []struct {
-		name               string
-		pattern            string
-		expectedRelease    ReleasePattern
-		expectedPrerelease PRVersionPattern
-		expectErr          bool
+		name string
+		v    string
+		args args
+		want bool
 	}{
 		{
-			name:    "Valid Version Pattern",
-			pattern: "1.2.3-alpha.1",
-			expectedRelease: ReleasePattern{
-				Major: MajorPattern{Pattern{"1"}},
-				Minor: MinorPattern{Pattern{"2"}},
-				Patch: PatchPattern{Pattern{"3"}},
+			name: "Major version higher",
+			v:    "2.2.2",
+			args: args{
+				versionB: "1.2.2",
 			},
-			expectedPrerelease: PRVersionPattern{
-				Identifiers: []PRIdentifierPattern{
-					{pattern: Pattern{"alpha"}},
-					{pattern: Pattern{"1"}},
-				},
-			},
-			expectErr: false,
+			want: true,
 		},
 		{
-			name:               "Invalid Version Pattern",
-			pattern:            "1.2.3-alpha.1.bad+",
-			expectedRelease:    ReleasePattern{},
-			expectedPrerelease: PRVersionPattern{},
-			expectErr:          true,
+			name: "Minor version higher",
+			v:    "1.2.2",
+			args: args{
+				versionB: "1.1.2",
+			},
+			want: true,
 		},
-		// add more test cases here
+		{
+			name: "Patch version higher",
+			v:    "1.0.2",
+			args: args{
+				versionB: "1.0.1",
+			},
+			want: true,
+		},
+		{
+			name: "Same version not higher",
+			v:    "1.0.0",
+			args: args{
+				versionB: "1.0.0",
+			},
+			want: false,
+		},
+		{
+			name: "Prerelease version higher",
+			v:    "1.0.0-beta.2",
+			args: args{
+				versionB: "1.0.0-beta.1",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version lower",
+			v:    "1.0.0-alpha.1",
+			args: args{
+				versionB: "1.0.0-beta.1",
+			},
+			want: false,
+		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pattern, err := ParseVersionPattern(tt.pattern)
-			if tt.expectErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedRelease, pattern.Release)
-				assert.Equal(t, tt.expectedPrerelease, pattern.Prerelease)
-			}
+			v, _ := ParseVersion(tt.v)
+			versionB, _ := ParseVersion(tt.args.versionB)
+			assert.Equal(t, tt.want, v.IsHigherThan(versionB), "Version.IsHigherThan() result not as expected")
 		})
 	}
 }
