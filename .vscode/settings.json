@@ -29,5 +29,4 @@
   "go.coverOnSingleTest": true,
   "go.coverOnSingleTestFile": true,
   "go.diagnostic.vulncheck": "Imports",
-  "go.gopath": ".devbox/nix/profile/default/bin/go",
 }

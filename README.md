@@ -1,6 +1,7 @@
 # Semver-Manager
 
 Semver-Manager is a command-line interface (CLI) tool that streamlines semantic versioning management for developers and seamlessly integrates with popular Git repositories or registry platforms. With Semver-Manager, you can rapidly generate new versions, maintain your version history, and ensure compliance with the Semantic Versioning 2.0.0 specification, all while effortlessly working alongside your preferred platform.
+
 ## Features
 
 ## Table of Contents
@@ -13,52 +14,67 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
 - [License](#license)
 
 ## Features
-### Implemented
-- Increment  
-  The increment command allows to increment a version's MAJOR, MINOR or PATCH number  
 
+### Implemented
+
+- Increment
+  - Release  
+    The increment command allows to increment a version's MAJOR, MINOR or PATCH number  
+    Behaviors:  
+    If no version exists and no release stream is no provided -> Creates
+  - Pre-Release
 - Fetch  
-  The fetch command allows to fetch semantic versions from multiple platforms and filter them 
+  The fetch command allows to fetch semantic versions from multiple platforms and filter them
   The fetch command is automatically chained with the filter command  
   Platforms:
+
   - Github
 
 - Filter
   - Highest: returns the highest semver found, is always run after all other filters
-  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in stream filter pattern.
+  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in stream filter pattern.
     Examples:
-    - Pattern: 1.\*.*
+    - Pattern: 1.\*.\*
       Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
       Result: 1.1.1, 1.1.1+build01
-    - Pattern: \*.\*.*+AMD
+    - Pattern: \*.\*.\*+AMD
       Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
       Result: 1.1.1+AMD
+
 ### To do
+
 #### Fetch
+
 - Implement additional platforms: gitlab, local git repository, oci repository, ghrc.io, npm, text file
 
+#### Namespacing
+
+- On fetch, increment, filter, maybe all commands?
+
 #### Filter
+
 - range
 
-#### increment
-- increment version MAJOR, MINOR, PATCH, defaults to latest number
-- Increment major, minor, or patch versions with a single command
-
 #### Push
+
 - create tag <tag> on `<destination> `
 
 #### Print
+
 - create version object and return json or yaml
 
 #### Validate
+
 - Validate semantic versioning
 
 #### CI interface
+
 - Easy integration with CI/CD pipelines (github action)
 
 #### CMD interface
 
 #### Backend server with database and api
+
 - Manage your project's version history
 
 ## Installation
@@ -74,7 +90,15 @@ To install Semver-Manager, you can download the binary for your platform from th
 
 Prerequisites:
 
-- [Go](https://golang.org/dl/) 1.20+ installed and configured
+- [Go](https://golang.org/dl/) 1.23+ installed and configured
+
+Run:
+`cd src/ && go build -o smgr ./cmd/smgr/`
+
+Or with no prerequisite:
+`devbox run build`
+
+### Install from Github Binary
 
 ```sh
 go install github.com/13013SwagR/semver-manager/smgr@<git_ref>
@@ -123,17 +147,20 @@ smgr fetch -r semver-manager -o 13013SwagR -t <github_token>
 ```
 
 ## Configuration
+
 Semver-Manager looks for a file in the current directory named `ccs.yaml`
 
 All flags are available as configuration entries, for example:
+
 ```
 TOKEN: <github_token>
 REPO: semver-manager
 OWNER: SMARTeacher
 ```
 
-All flags are also available environment variables with the `CCS_` prefix, for example:   
+All flags are also available environment variables with the `CCS_` prefix, for example:  
 `TOKEN=<github_token>` `REPO=semver-manager` `OWNER=SMARTeacher`
+
 ## Contributing
 
 Contributions to Semver-Manager are welcomed and appreciated! Please read the [Contributing Guidelines](CONTRIBUTING.md) to get started. By participating in this project, you agree to abide by the [Code of Conduct](CODE_OF_CONDUCT.md).

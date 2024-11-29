@@ -22,7 +22,12 @@ func NewIncrementCommand() *cobra.Command {
 	incrementCmd := &cobra.Command{
 		Use:   "increment",
 		Short: "Increment a version",
-		Long:  `Increment a version according to the provided increment type.`,
+		Long: `
+Increment a version according to the provided:
+  - Increment level (major, minor, patch)
+  - The source, any of: repository, source-stream, source-version, source-versions
+  - 
+  `,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		},
 
@@ -38,10 +43,10 @@ func NewIncrementCommand() *cobra.Command {
 
 	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch")
 	incrementCmd.Flags().StringVarP(&config.sourceVersion, "source-version", "V", "0.0.0", "The source version to increment from")
-	incrementCmd.Flags().StringVarP(&config.sourceStream, "source-stream", "s", "", "The source stream to increment from")
-	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to")
-	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from")
-	incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of")
+	// incrementCmd.Flags().StringVarP(&config.sourceStream, "source-stream", "s", "", "The source stream to increment from ")
+	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to e.g. 1.2.*")
+	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from e.g. \"0.0.0,1.0.0,1.1.0\"")
+	incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of e.g. https://github.com/<user|org>/<repo>")
 	return incrementCmd
 }
 
