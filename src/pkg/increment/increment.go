@@ -156,11 +156,11 @@ func PromotePRVersion(sourceVersion models.Version, targetStream models.VersionP
 	promotedToStream := promoteToTargetStream(targetStream, sourceVersion)
 
 	highestStreamVersion, err := filter.GetHighestStreamVersion(versionList, targetStream)
-	if _, ok := err.(*models.EmptyVersionListError); ok {
-		if utils.IsNumerical(promotedToStream.Prerelease.LastID().Value()) {
-			promotedToStream.Prerelease.Identifiers[len(promotedToStream.Prerelease.Identifiers)-1].Set("0")
-			promotedVersion = promotedToStream
+	if _, ok := err.(*models.EmptyVersionListError); ok { // if the stream is empty
+		if utils.IsNumerical(promotedToStream.Prerelease.LastID().Value()) { // if the last ID is a number
+			promotedToStream.Prerelease.Identifiers[len(promotedToStream.Prerelease.Identifiers)-1].Set("0") // set it to 0
 		}
+		promotedVersion = promotedToStream
 	} else {
 		promotedVersion = promoteVersionAbove(highestStreamVersion, promotedToStream)
 	}

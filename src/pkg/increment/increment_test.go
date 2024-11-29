@@ -449,17 +449,32 @@ func TestPromotePRVersion(t *testing.T) {
 			want: testutils.NewVersion("1.0.0-Beta"),
 		},
 		{
+			name:          "Promote from Alpha to Beta -- no digit and existing version",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta"),
+			versions: []models.Version{
+				testutils.NewVersion("0.1.0-Alpha"),
+				testutils.NewVersion("0.1.0-Beta"),
+				testutils.NewVersion("1.0.0-Alpha"),
+				testutils.NewVersion("1.0.0-Beta"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta"),
+		},
+		{
 			name:          "Promote from Alpha to Longer Beta-teta release",
 			sourceVersion: testutils.NewVersion("1.0.1-Alpha"),
-			targetStream:  testutils.NewVersionPattern("1.0.0-Beta-teta-*"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta.teta.*"),
 			versions: []models.Version{
 				testutils.NewVersion("1.0.0-Alpha"),
 				testutils.NewVersion("1.0.0-Beta"),
 				testutils.NewVersion("1.0.0"),
-				testutils.NewVersion("1.0.0-Beta-teta-0"),
+				testutils.NewVersion("1.0.0-Beta.teta.0"),
 			},
-			want: testutils.NewVersion("1.0.0-Beta-teta-1"),
+			want: testutils.NewVersion("1.0.0-Beta.teta.1"),
 		},
+		// test 1.0.0-*.*.*
+		// test 1.0.0-alpha.*.teta.*
+		// test 1.0.0-alpha.*.teta
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
