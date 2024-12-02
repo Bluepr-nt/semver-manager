@@ -14,7 +14,8 @@ func NewFilterCommand() *cobra.Command {
 		Short: "Filter is a CLI tool for filtering versions",
 		Long:  `Filter is a CLI tool for filtering versions using various criteria.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			versions := filter.GetVersions(filterArgs.Versions)
+
+			versions := filter.GetValidVersions(filterArgs.Versions)
 
 			filters := []filter.FilterFunc{}
 			if filterArgs.StreamFilter != "" {

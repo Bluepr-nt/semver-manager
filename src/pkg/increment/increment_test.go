@@ -287,7 +287,7 @@ func TestIncrementReleaseFromStream(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := IncrementReleaseFromStream(tt.args.sourceVersions, tt.args.streamPattern, tt.args.increment)
+			got, err := IncrementReleaseToStream(tt.args.sourceVersions, tt.args.streamPattern, tt.args.increment)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, tt.want, got)
@@ -363,8 +363,8 @@ func TestAlphabeticalIncrement(t *testing.T) {
 		{
 			name:             "Error expected a single character identifier",
 			sourceIdentifier: testutils.NewPRIdentifier("AA"),
-			want:             models.PRIdentifier{},
-			wantErr:          true,
+			want:             testutils.NewPRIdentifier("AB"),
+			wantErr:          false,
 		},
 		{
 			name:             "Error expected an alphabetical identifier",

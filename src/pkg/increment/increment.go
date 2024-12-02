@@ -8,16 +8,7 @@ import (
 	"strconv"
 )
 
-// Get all versions (fetch)
-
-// Promote highest prerelease to target prerelease or release stream
-
-// Get highest release on target stream
-// Get highest prerelease on target stream
 // Compare existing increment to target increment, if target increment is higher, use target increment
-
-// filter by release stream and Get highest release
-// filter by prerelease stream Get highest prerelease
 
 // Calculate increment between highest release and highest prerelease as existing increment
 func CalculateIncrementTypeForNewPrerelease(highestRelease models.Version, highestPrerelease models.Version, requestedIncrement models.Increment) models.Increment {
@@ -56,7 +47,7 @@ func IncrementRelease(sourceVersion models.Version, increment models.Increment) 
 	return incrementedVersion
 }
 
-func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
+func IncrementReleaseToStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
 	if !streamPattern.IsReleaseOnlyPattern() {
 		return models.Version{}, fmt.Errorf("error: stream pattern must be release only")
 	}
@@ -72,32 +63,11 @@ func IncrementReleaseFromStream(sourceVersions []models.Version, streamPattern m
 	return IncrementRelease(sourceVersion, increment), nil
 }
 
-// func PrereleaseIncrement(sourceVersion models.Version, incrementType models.Increment) models.Version {
-// 	incrementedVersion := models.Version{}
-// 	if incrementType == models.Major {
-// 		incrementedVersion.Release.Major = sourceVersion.Release.Major
-// 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
-// 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch
-// 		incrementedVersion.Prerelease.Major = sourceVersion.Prerelease.Major + 1
-// 		incrementedVersion.Prerelease.Minor = 0
-// 		incrementedVersion.Prerelease.Patch = 0
-// 	} else if incrementType == models.Minor {
-// 		incrementedVersion.Release.Major = sourceVersion.Release.Major
-// 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
-// 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch
-// 		incrementedVersion.Prerelease.Major = sourceVersion.Prerelease.Major
-// 		incrementedVersion.Prerelease.Minor = sourceVersion.Prerelease.Minor + 1
-// 		incrementedVersion.Prerelease.Patch = 0
-// 	} else if incrementType == models.Patch {
-// 		incrementedVersion.Release.Major = sourceVersion.Release.Major
-// 		incrementedVersion.Release.Minor = sourceVersion.Release.Minor
-// 		incrementedVersion.Release.Patch = sourceVersion.Release.Patch
-// 		incrementedVersion.Prerelease.Major = sourceVersion.Prerelease.Major
-// 		incrementedVersion.Prerelease.Minor = sourceVersion.Prerelease.Minor
-// 		incrementedVersion.Prerelease.Patch = sourceVersion.Prerelease.Patch + 1
-// 	}
-// 	return incrementedVersion
-// }
+func PrereleaseIncrement(prVersion models.Version) models.Version {
+	incrementedIdentifier := PRIdentifierIncrement(prVersion.Prerelease.LastID())
+	prVersion.Prerelease.Identifiers[len(prVersion.Prerelease.Identifiers)-1] = incrementedIdentifier
+	return prVersion
+}
 
 func PRIdentifierIncrement(sourceId models.PRIdentifier) (newId models.PRIdentifier) {
 	if utils.IsNumerical(sourceId.Value()) {

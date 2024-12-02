@@ -67,6 +67,7 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command, filterCmd *cobra.Com
 		if err != nil {
 			return err
 		}
+		// TODO Why split then merge again?
 		if len(cliTags) > 0 {
 			klog.V(2).Infof("Merging tags: %s", cliTags)
 			semverTags = append(semverTags, models.SplitVersions(cliTags)...)

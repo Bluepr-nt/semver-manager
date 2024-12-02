@@ -91,6 +91,23 @@ func ParseVersion(v string) (Version, error) {
 		nil
 }
 
+func ParseVersions(vList string) (VersionSlice, error) {
+
+	versionStrings := SplitVersions(vList)
+	var versions VersionSlice
+
+	for _, rawVersion := range versionStrings {
+		version, err := ParseVersion(rawVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		versions = append(versions, version)
+
+	}
+	return versions, nil
+}
+
 type VersionSlice []Version
 
 func (vs VersionSlice) String() string {
@@ -288,14 +305,18 @@ func (i PRIdentifier) Value() string {
 	return i.identifier
 }
 
+// IsEqualTo compares two PRIdentifiers and returns true if they are equal
 func (i PRIdentifier) IsEqualTo(identifierB PRIdentifier) bool {
 	return i.identifier == identifierB.identifier
 }
 
+// IsHigherThan compares two PRIdentifiers and returns true if the first identifier is higher than the second
+// according to the Semver specification
 func (i PRIdentifier) IsHigherThan(identifierB PRIdentifier) bool {
 	return i.identifier > identifierB.identifier
 }
 
+// ParsePrIdentifier parses a string into a PRIdentifier
 func ParsePrIdentifier(v string) (PRIdentifier, error) {
 	i := PRIdentifier{}
 	if err := i.Set(v); err != nil {
@@ -304,6 +325,9 @@ func ParsePrIdentifier(v string) (PRIdentifier, error) {
 	return i, nil
 }
 
+// Set sets the PRIdentifier value
+// It returns an error if the value is empty, contains leading zeros,
+// or contains characters other than alphanumerics and hyphens
 func (i *PRIdentifier) Set(v string) error {
 	if len(v) < 1 {
 		return fmt.Errorf("prerelease identifiers MUST NOT be empty, got: %s", v)
@@ -341,9 +365,12 @@ type BuildIdentifier struct {
 	identifier string
 }
 
+// String returns the BuildIdentifier value
 func (i *BuildIdentifier) String() string {
 	return i.identifier
 }
+
+// ParseBuildIdentifier parses a string into a BuildIdentifier
 func ParseBuildIdentifier(v string) (BuildIdentifier, error) {
 	i := BuildIdentifier{}
 	if err := i.Set(v); err != nil {
@@ -352,9 +379,11 @@ func ParseBuildIdentifier(v string) (BuildIdentifier, error) {
 	return i, nil
 }
 
+// Set sets the BuildIdentifier value
+// It returns an error if the value is empty or contains characters other than alphanumerics and hyphens
 func (i *BuildIdentifier) Set(v string) error {
 	if len(v) < 1 {
-		return fmt.Errorf("prerelease identifiers MUST NOT be empty, got: %s", v)
+		return fmt.Errorf("build identifiers MUST NOT be empty, got: %s", v)
 	}
 
 	if !containsOnly(v, alphanum) {
@@ -383,6 +412,8 @@ func versionDigitsCompliance(version string, increment Increment) error {
 	return nil
 }
 
+// SplitVersions splits a string of versions into a slice of strings
+// separated by commas or spaces
 func SplitVersions(stringVersions string) (versionStringSlice []string) {
 	stringVersions = strings.TrimSpace(stringVersions)
 
@@ -395,6 +426,8 @@ func SplitVersions(stringVersions string) (versionStringSlice []string) {
 	return versionStringSlice
 }
 
+// IsHigherThan compares two Versions and returns true if the first version is higher than the second
+// according to the Semver specification
 func (v Version) IsHigherThan(versionB Version) bool {
 	if v.Release.Major != versionB.Release.Major {
 		return v.Release.Major.GT(versionB.Release.Major)

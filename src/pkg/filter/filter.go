@@ -54,6 +54,8 @@ func GetHighestStreamVersion(versions []models.Version, streamPattern models.Ver
 	return sourceVersion[0], nil
 }
 
+// VersionPatternFilter returns a filter function that
+// filters versions based on a VersionPattern
 func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
@@ -85,14 +87,16 @@ func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
 	}
 }
 
-func GetVersions(stringVersions string) []models.Version {
+// GetValidVersions returns a list of valid versions from one or more string lists of versions
+// The versions are split by comma or space and then parsed into a Version struct
+func GetValidVersions(stringVersionsList ...string) []models.Version {
 	var versions []models.Version
-
-	for _, stringVersion := range models.SplitVersions(stringVersions) {
-		version, _ := models.ParseVersion(stringVersion)
-		versions = append(versions, version)
+	for _, stringVersions := range stringVersionsList {
+		for _, stringVersion := range models.SplitVersions(stringVersions) {
+			version, _ := models.ParseVersion(stringVersion)
+			versions = append(versions, version)
+		}
 	}
-
 	return versions
 }
 
