@@ -363,8 +363,8 @@ func TestAlphabeticalIncrement(t *testing.T) {
 		{
 			name:             "Error expected a single character identifier",
 			sourceIdentifier: testutils.NewPRIdentifier("AA"),
-			want:             testutils.NewPRIdentifier("AB"),
-			wantErr:          false,
+			want:             models.PRIdentifier{},
+			wantErr:          true,
 		},
 		{
 			name:             "Error expected an alphabetical identifier",
@@ -407,6 +407,7 @@ func TestPromotePRVersion(t *testing.T) {
 		targetStream  models.VersionPattern
 		versions      []models.Version
 		want          models.Version
+		wantErr       bool
 	}{
 		{
 			name:          "Promote from Alpha to Beta with digit",
@@ -419,7 +420,7 @@ func TestPromotePRVersion(t *testing.T) {
 			want: testutils.NewVersion("1.0.0-Beta.1"),
 		},
 		{
-			name:          "Promote from Alpha to Patch Release",
+			name:          "Error pattern is a release pattern",
 			sourceVersion: testutils.NewVersion("1.0.1-Alpha"),
 			targetStream:  testutils.NewVersionPattern("1.0.*"),
 			versions: []models.Version{
@@ -427,7 +428,8 @@ func TestPromotePRVersion(t *testing.T) {
 				testutils.NewVersion("1.0.0-Beta"),
 				testutils.NewVersion("1.0.0"),
 			},
-			want: testutils.NewVersion("1.0.1"),
+			want:    models.Version{},
+			wantErr: true,
 		},
 		{
 			name:          "Promote from Alpha to Beta with digit first version on stream",
@@ -458,7 +460,7 @@ func TestPromotePRVersion(t *testing.T) {
 				testutils.NewVersion("1.0.0-Alpha"),
 				testutils.NewVersion("1.0.0-Beta"),
 			},
-			want: testutils.NewVersion("1.0.0-Beta"),
+			want: testutils.NewVersion("1.0.0-Beta.0"),
 		},
 		{
 			name:          "Promote from Alpha to Longer Beta-teta release",
@@ -472,14 +474,68 @@ func TestPromotePRVersion(t *testing.T) {
 			},
 			want: testutils.NewVersion("1.0.0-Beta.teta.1"),
 		},
+		{
+			name:          "Promote to stream with longer Prerelease than stream",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha.1"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Beta.Alpha.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta.Alpha.1"),
+		},
+
+		{
+			name:          "Promote to loose prerelease stream with some PreRelease identifiers set by source version",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha.Beta.0"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-*.Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.0"),
+				testutils.NewVersion("1.0.0-Beta.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Alpha.Beta.1"),
+		},
+		{
+			name:          "Promote to loose prerelease stream with matching prerelease versions",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-*.Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.Beta.0"),
+				testutils.NewVersion("1.0.0-Teta.Beta.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Teta.Beta.1"),
+		},
+		{
+			name:          "Promote to loose prerelease stream with matching prerelease versions with more identifiers than pattern",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-*.Beta.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.Beta.0"),
+				testutils.NewVersion("1.0.0-Teta.Beta.0.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Teta.Beta.0.1"),
+		},
 		// test 1.0.0-*.*.*
-		// test 1.0.0-alpha.*.teta.*
-		// test 1.0.0-alpha.*.teta
+		{
+			name:          "Promote to very loose prerelease stream",
+			sourceVersion: testutils.NewVersion("1.0.0-Alpha"),
+			targetStream:  testutils.NewVersionPattern("1.0.0-*.*.*"),
+			versions: []models.Version{
+				testutils.NewVersion("1.0.0-Alpha.0"),
+				testutils.NewVersion("1.0.0-Beta.0"),
+			},
+			want: testutils.NewVersion("1.0.0-Beta.1"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := PromotePRVersion(tt.sourceVersion, tt.targetStream, tt.versions)
-			assert.Equal(t, tt.want, got)
+			got, err := IncrementPReleaseToStream(tt.sourceVersion, tt.targetStream, tt.versions)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, tt.want, got)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
 		})
 	}
 }

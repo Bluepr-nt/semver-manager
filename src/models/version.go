@@ -18,21 +18,33 @@ type Release struct {
 	Patch ReleaseDigit
 }
 
+// IsEqualTo compares two Releases and returns true if they are equal
+func (r Release) IsEqualTo(releaseB Release) bool {
+	return r.Major == releaseB.Major && r.Minor == releaseB.Minor && r.Patch == releaseB.Patch
+}
+
+func (r Release) IsHigherThan(rB Release) bool {
+	if r.Major.GT(rB.Major) {
+		return true
+	}
+
+	if r.Major == rB.Major && r.Minor.GT(rB.Minor) {
+		return true
+	}
+
+	if r.Major == rB.Major && r.Minor == rB.Minor && r.Patch.GT(rB.Patch) {
+		return true
+	}
+
+	return false
+}
+
+func (r *Release) String() string {
+	return fmt.Sprintf("%d.%d.%d", r.Major.value, r.Minor.value, r.Patch.value)
+}
+
 type ReleaseDigit struct {
 	value uint64
-}
-
-func (r ReleaseDigit) String() string {
-	stringValue := fmt.Sprintf("%d", r.value)
-	return stringValue
-}
-
-func (r ReleaseDigit) Value() uint64 {
-	return r.value
-}
-
-func (r *ReleaseDigit) Set(d uint64) {
-	r.value = d
 }
 
 func (r *ReleaseDigit) Increment() {
@@ -47,8 +59,17 @@ func (r ReleaseDigit) LT(cmp ReleaseDigit) bool {
 	return r.value < cmp.value
 }
 
-func (r *Release) String() string {
-	return fmt.Sprintf("%d.%d.%d", r.Major.value, r.Minor.value, r.Patch.value)
+func (r *ReleaseDigit) Set(d uint64) {
+	r.value = d
+}
+
+func (r ReleaseDigit) String() string {
+	stringValue := fmt.Sprintf("%d", r.value)
+	return stringValue
+}
+
+func (r ReleaseDigit) Value() uint64 {
+	return r.value
 }
 
 type Version struct {
@@ -59,6 +80,34 @@ type Version struct {
 
 func (v Version) IsRelease() bool {
 	return len(v.Prerelease.Identifiers) < 1
+}
+
+// IsEqualTo compares two Versions and returns true if they are equal
+// Build metadata is ignored in the comparison as per the Semver specification
+func (v *Version) IsEqualTo(versionB Version) bool {
+	if v.Release.IsEqualTo(versionB.Release) && v.Prerelease.IsEqualTo(versionB.Prerelease) {
+		return true
+	}
+	return false
+}
+
+// IsHigherThan compares two Versions and returns true if the first version is higher than the second
+// according to the Semver specification
+func (v Version) IsHigherThan(versionB Version) bool {
+
+	if v.Release.IsHigherThan(versionB.Release) {
+		return true
+	}
+
+	if v.IsRelease() && !versionB.IsRelease() {
+		return true
+	}
+
+	if versionB.IsRelease() && !v.IsRelease() {
+		return false
+	}
+
+	return v.Prerelease.IsHigherThan(versionB.Prerelease)
 }
 
 func (v *Version) String() string {
@@ -91,6 +140,21 @@ func ParseVersion(v string) (Version, error) {
 		nil
 }
 
+type VersionSlice []Version
+
+func (vs VersionSlice) String() string {
+	var builder strings.Builder
+
+	for i, version := range vs {
+		builder.WriteString(version.String())
+		if i < len(vs)-1 {
+			builder.WriteString(" ")
+		}
+	}
+
+	return builder.String()
+}
+
 func ParseVersions(vList string) (VersionSlice, error) {
 
 	versionStrings := SplitVersions(vList)
@@ -106,21 +170,6 @@ func ParseVersions(vList string) (VersionSlice, error) {
 
 	}
 	return versions, nil
-}
-
-type VersionSlice []Version
-
-func (vs VersionSlice) String() string {
-	var builder strings.Builder
-
-	for i, version := range vs {
-		builder.WriteString(version.String())
-		if i < len(vs)-1 {
-			builder.WriteString(" ")
-		}
-	}
-
-	return builder.String()
 }
 
 func parseBuildMetadata(v string) (BuildMetadata, error) {
@@ -236,6 +285,32 @@ type PRVersion struct {
 	Identifiers []PRIdentifier
 }
 
+func (pr PRVersion) IsEqualTo(prB PRVersion) bool {
+	if len(pr.Identifiers) != len(prB.Identifiers) {
+		return false
+	}
+
+	for index, identifier := range pr.Identifiers {
+		if !identifier.IsEqualTo(prB.Identifiers[index]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (pr *PRVersion) IsHigherThan(prB PRVersion) bool {
+	for index, identifier := range pr.Identifiers {
+		if len(prB.Identifiers) <= index {
+			return true
+		} else if identifier.IsEqualTo(prB.Identifiers[index]) {
+			continue
+		} else {
+			return identifier.IsHigherThan(prB.Identifiers[index])
+		}
+	}
+	return false
+}
+
 func (pr PRVersion) LastID() PRIdentifier {
 	if len(pr.Identifiers) > 0 {
 		return pr.Identifiers[len(pr.Identifiers)-1]
@@ -313,6 +388,11 @@ func (i PRIdentifier) IsEqualTo(identifierB PRIdentifier) bool {
 // IsHigherThan compares two PRIdentifiers and returns true if the first identifier is higher than the second
 // according to the Semver specification
 func (i PRIdentifier) IsHigherThan(identifierB PRIdentifier) bool {
+	if containsOnly(i.identifier, numbers) && containsOnly(identifierB.identifier, numbers) {
+		iValue, _ := strconv.ParseUint(i.identifier, 10, 64)
+		identifierBValue, _ := strconv.ParseUint(identifierB.identifier, 10, 64)
+		return iValue > identifierBValue
+	}
 	return i.identifier > identifierB.identifier
 }
 
@@ -424,38 +504,4 @@ func SplitVersions(stringVersions string) (versionStringSlice []string) {
 		versionStringSlice = strings.Split(stringVersions, " ")
 	}
 	return versionStringSlice
-}
-
-// IsHigherThan compares two Versions and returns true if the first version is higher than the second
-// according to the Semver specification
-func (v Version) IsHigherThan(versionB Version) bool {
-	if v.Release.Major != versionB.Release.Major {
-		return v.Release.Major.GT(versionB.Release.Major)
-	}
-	if v.Release.Minor != versionB.Release.Minor {
-		return v.Release.Minor.GT(versionB.Release.Minor)
-	}
-	if v.Release.Patch != versionB.Release.Patch {
-		return v.Release.Patch.GT(versionB.Release.Patch)
-	}
-
-	if v.IsRelease() && versionB.IsRelease() {
-		return false
-	}
-
-	if versionB.IsRelease() {
-		return false
-	}
-
-	for index, identifier := range v.Prerelease.Identifiers {
-		if len(versionB.Prerelease.Identifiers) <= index {
-			return true
-		}
-		if !identifier.IsEqualTo(versionB.Prerelease.Identifiers[index]) {
-			return identifier.IsHigherThan(versionB.Prerelease.Identifiers[index])
-		} else if (len(v.Prerelease.Identifiers) - 1) == index {
-			return false
-		}
-	}
-	return true
 }

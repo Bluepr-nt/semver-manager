@@ -35,7 +35,7 @@ func TestNewIncrementCommand(t *testing.T) {
 	t.Run("Command has expected flags", func(t *testing.T) {
 		cmd := NewIncrementCommand()
 		flags := cmd.Flags()
-		expectedFlags := []string{"level", "repository", "source-versions", "target-stream"}
+		expectedFlags := []string{"level", "source-versions", "target-stream"}
 		for _, expectedFlag := range expectedFlags {
 			assert.NotNil(t, flags.Lookup(expectedFlag))
 

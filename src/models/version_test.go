@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewBuildIdentifier(t *testing.T) {
+func TestParseBuildIdentifier(t *testing.T) {
 	type args struct {
 		v string
 	}
@@ -54,7 +54,7 @@ func TestNewBuildIdentifier(t *testing.T) {
 	}
 }
 
-func TestNewPrIdentifier(t *testing.T) {
+func TestParsePrIdentifier(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -84,7 +84,7 @@ func TestNewPrIdentifier(t *testing.T) {
 	}
 }
 
-func TestNewVersion(t *testing.T) {
+func TestParseVersion(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -379,7 +379,80 @@ func TestVersion_IsHigherThan(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "Prerelease version higher comparing alpha to alpha.1",
+			v:    "1.0.0-alpha.1",
+			args: args{
+				versionB: "1.0.0-alpha",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing alpha.1 to alpha.beta",
+			v:    "1.0.0-alpha.beta",
+			args: args{
+				versionB: "1.0.0-alpha.1",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing alpha.beta to beta",
+			v:    "1.0.0-beta",
+			args: args{
+				versionB: "1.0.0-alpha.beta",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing beta to beta.2",
+			v:    "1.0.0-beta.2",
+			args: args{
+				versionB: "1.0.0-beta",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing beta.2 to beta.11",
+			v:    "1.0.0-beta.11",
+			args: args{
+				versionB: "1.0.0-beta.2",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing beta.11 to beta.rc.1",
+			v:    "1.0.0-rc.1",
+			args: args{
+				versionB: "1.0.0-beta.11",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version lower comparing beta.rc.1 to beta.11",
+			v:    "1.0.0-rc.1",
+			args: args{
+				versionB: "1.0.0-beta.11",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing 1.0.0-rc.1 to 1.0.0",
+			v:    "1.0.0",
+			args: args{
+				versionB: "1.0.0-rc.1",
+			},
+			want: true,
+		},
+		{
+			name: "Prerelease version higher comparing 1.0.0-alpha.0 to 1.0.0-beta",
+			v:    "1.0.0-beta",
+			args: args{
+				versionB: "1.0.0-alpha.0 ",
+			},
+			want: true,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := ParseVersion(tt.v)

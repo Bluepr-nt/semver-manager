@@ -101,7 +101,7 @@ func GetValidVersions(stringVersionsList ...string) []models.Version {
 }
 
 func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
-	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
+	if len(prIdentifiersPattern) > len(prerelease.Identifiers) {
 		return false
 	}
 
