@@ -21,8 +21,10 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
   - Release  
     The increment command allows to increment a version's MAJOR, MINOR or PATCH number  
     Behaviors:  
-    If no version exists and no release stream is no provided -> Creates
+    If no version exists and no release stream is no provided -> Creates version 0.0.1
   - Pre-Release
+  - Target Stream
+    When a target stream if specified, it will create new version on that stream. When incrementing, all releases matching the release pattern are considered even if they don't match the pre-release pattern. e.g. 1.1.1 will match _._.\*-alpha unlike the filter command
 - Fetch  
   The fetch command allows to fetch semantic versions from multiple platforms and filter them
   The fetch command is automatically chained with the filter command  
@@ -32,7 +34,7 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
 
 - Filter
   - Highest: returns the highest semver found, is always run after all other filters
-  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in stream filter pattern.
+  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in the stream filter pattern. e.g. 1.1.1 won't match _._.\*-alpha
     Examples:
     - Pattern: 1.\*.\*
       Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
@@ -40,6 +42,36 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
     - Pattern: \*.\*.\*+AMD
       Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
       Result: 1.1.1+AMD
+    - Pattern: 1.0.0-Beta.\*
+      Versions: 1.0.0-Alpha.0, 1.0.0-Beta.0, 1.0.0-Beta.1
+      Result: 1.0.0-Beta.0, 1.0.0-Beta.1
+    - Pattern: 1.0.0-Beta
+      Versions: 0.1.0-Alpha, 0.1.0-Beta, 1.0.0-Beta
+      Result: 1.0.0-Beta
+    - Pattern: 1.0.0-Beta.\*
+      Versions: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
+      Result: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
+    - Pattern: 1.0.0-\*.Beta.\*
+      Versions: 1.0.0-0.Alpha.0, 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
+      Result: 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
+    - Pattern:
+      Versions:
+      Result:
+    - Pattern:
+      Versions:
+      Result:
+    - Pattern:
+      Versions:
+      Result:
+    - Pattern:
+      Versions:
+      Result:
+    - Pattern:
+      Versions:
+      Result:
+    - Pattern:
+      Versions:
+      Result:
 
 ### To do
 

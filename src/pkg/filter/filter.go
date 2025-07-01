@@ -54,29 +54,93 @@ func GetHighestStreamVersion(versions []models.Version, streamPattern models.Ver
 	return sourceVersion[0], nil
 }
 
+func GetHighestStreamVersionWithReleases(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
+
+	streamFilter := VersionPatternFilter(streamPattern)
+	sourceVersions, err := ApplyFilters(versions, streamFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+
+	if !streamPattern.Release.IsStrict() {
+		releaseOnlyFilter := VersionPatternFilter(models.VersionPattern{Release: streamPattern.Release, Prerelease: models.PRVersionPattern{}, Build: streamPattern.Build})
+		sourceReleaseVersion, err := ApplyFilters(versions, releaseOnlyFilter)
+		if err != nil {
+			return models.Version{}, err
+		}
+
+		sourceVersions = append(sourceVersions, sourceReleaseVersion...)
+	}
+
+	highestFilter := Highest()
+	highestVersion, err := ApplyFilters(sourceVersions, highestFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+
+	return highestVersion[0], nil
+}
+
 // VersionPatternFilter returns a filter function that
 // filters versions based on a VersionPattern
 func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
+
+	return func(versions []models.Version) ([]models.Version, error) {
+
+		var filtered []models.Version
+		releaseFilter := ReleasePatternFilter(pattern.Release)
+		prereleaseFilter := PrereleasePatternFilter(pattern.Prerelease)
+		buildMetadataFilter := BuildMetadataFilter(pattern.Build)
+
+		filtered, err := ApplyFilters(versions, releaseFilter, prereleaseFilter, buildMetadataFilter)
+		if err != nil {
+			return nil, err
+		}
+
+		return filtered, nil
+	}
+}
+
+// ReleasePatternFilter returns a filter function that
+// filters versions based on a ReleasePattern
+// all release and prelease versions are returned
+func ReleasePatternFilter(pattern models.ReleasePattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if pattern.Release.Major.Value() != "*" && version.Release.Major.String() != pattern.Release.Major.Value() {
+			if pattern.Major.Value() != "*" && version.Release.Major.String() != pattern.Major.Value() {
 				continue
 			}
-			if pattern.Release.Minor.Value() != "*" && version.Release.Minor.String() != pattern.Release.Minor.Value() {
+			if pattern.Minor.Value() != "*" && version.Release.Minor.String() != pattern.Minor.Value() {
 				continue
 			}
-			if pattern.Release.Patch.Value() != "*" && version.Release.Patch.String() != pattern.Release.Patch.Value() {
+			if pattern.Patch.Value() != "*" && version.Release.Patch.String() != pattern.Patch.Value() {
 				continue
 			}
-			if len(pattern.Prerelease.Identifiers) > 0 && !matchPrerelease(pattern.Prerelease.Identifiers, version.Prerelease) {
-				continue
-			} else if len(pattern.Prerelease.Identifiers) == 0 && len(version.Prerelease.Identifiers) > 0 {
-				continue
-			}
-			// Checking build metadata
-			if len(pattern.Build.Identifiers) > 0 && !matchBuildMetadata(pattern.Build.Identifiers, version.BuildMetadata) {
+
+			filtered = append(filtered, version)
+		}
+
+		return filtered, nil
+	}
+}
+
+// PrereleasePatternFilter returns a filter function that
+// filters versions based on a PrereleasePattern
+// prerelease versions are returned
+// all release versions are also returned
+func PrereleasePatternFilter(pattern models.PRVersionPattern) FilterFunc {
+	return func(versions []models.Version) ([]models.Version, error) {
+
+		var filtered []models.Version
+
+		for _, version := range versions {
+			// if version.IsRelease() {
+			// 	filtered = append(filtered, version)
+			// 	continue
+			// } else
+			if !matchPrerelease(pattern.Identifiers, version.Prerelease) {
 				continue
 			}
 
@@ -101,7 +165,7 @@ func GetValidVersions(stringVersionsList ...string) []models.Version {
 }
 
 func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
-	if len(prIdentifiersPattern) > len(prerelease.Identifiers) {
+	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
 		return false
 	}
 
@@ -117,6 +181,27 @@ func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelea
 func toUint(s string) uint64 {
 	v, _ := strconv.ParseUint(s, 10, 64)
 	return v
+}
+
+func BuildMetadataFilter(pattern models.BuildMetadataPattern) FilterFunc {
+	return func(versions []models.Version) ([]models.Version, error) {
+		var filtered []models.Version
+
+		for _, version := range versions {
+			if len(pattern.Identifiers) == 0 {
+				filtered = append(filtered, version)
+				continue
+			}
+
+			if !matchBuildMetadata(pattern.Identifiers, version.BuildMetadata) {
+				continue
+			}
+
+			filtered = append(filtered, version)
+		}
+
+		return filtered, nil
+	}
 }
 
 func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern, buildMetadata models.BuildMetadata) bool {

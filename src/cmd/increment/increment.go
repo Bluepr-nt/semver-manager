@@ -60,8 +60,8 @@ Increment a version according to the provided:
 				fmt.Println("targetstream is empty")
 			}
 			if level == "" && targetStream == "" {
-				cmd.Usage() // Prints usage information
-				return errors.New("error: either --level or --target-stream must be specified")
+				cmd.Usage()                                                                     // Prints usage information
+				return errors.New("error: either --level or --target-stream must be specified") // TODO default to patch
 			}
 
 			return RunIncrement(config, cmd)
@@ -70,10 +70,10 @@ Increment a version according to the provided:
 
 	// TODO require level or target stream
 
-	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch (required if --target-stream not specified)")
+	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch (defaults to patch if --target-stream not specified)")
 	// incrementCmd.Flags().StringVarP(&config.sourceVersion, "source-version", "V", "0.0.0", "The source version to increment from")
 	// incrementCmd.Flags().StringVarP(&config.sourceStream, "source-stream", "s", "", "The source stream to increment from ")
-	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to e.g. 1.2.* (required if --level not specified)")
+	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to e.g. 1.2.* (optional)")
 	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from e.g. \"0.0.0,1.0.0,1.1.0\" (optional)")
 	// incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of e.g. https://github.com/<user|org>/<repo> (optional)")
 
@@ -92,7 +92,7 @@ func RunIncrement(config *config, cmd *cobra.Command) error {
 		}
 	}
 
-	newVersion, err := increment.IncrementReleaseToStream(sourceVersions, targetStream, models.Increment(config.incrementType))
+	newVersion, err := increment.IncrementVersion(sourceVersions, targetStream, models.Increment(config.incrementType))
 	if err != nil {
 		return err
 	}

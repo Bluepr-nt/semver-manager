@@ -20,6 +20,10 @@ func (v VersionPattern) IsReleaseOnlyPattern() bool {
 	return true
 }
 
+func (v VersionPattern) IsPRPattern() bool {
+	return len(v.Prerelease.Identifiers) > 0
+}
+
 func (v VersionPattern) IsEmpty() bool {
 	if v.Release.Major.Value() == "" &&
 		v.Release.Minor.Value() == "" &&
@@ -30,6 +34,7 @@ func (v VersionPattern) IsEmpty() bool {
 	}
 	return false
 }
+
 func (v VersionPattern) FirstVersion() (firstVersion Version) {
 	firstVersion.Release = v.FirstRelease()
 	firstVersion.Prerelease = v.FirstPrerelease()
@@ -43,7 +48,7 @@ func (v VersionPattern) FirstRelease() (FirstRelease Release) {
 	minor := getAbsoluteValue(v.Release.Minor.pattern)
 	patch := getAbsoluteValue(v.Release.Patch.pattern)
 
-	release, _ := parseRelease(fmt.Sprintf("%s.%s.%s", major, minor, patch))
+	release, _ := ParseRelease(fmt.Sprintf("%s.%s.%s", major, minor, patch))
 	return release
 }
 
@@ -52,12 +57,12 @@ func (v VersionPattern) FirstPrerelease() PRVersion {
 	for i, identifier := range v.Prerelease.Identifiers {
 		rawId := getAbsoluteValue(identifier.pattern)
 		if i == 0 {
-			rawPRVersion = fmt.Sprintf("%s-%s", rawPRVersion, rawId)
+			rawPRVersion = fmt.Sprintf("%s", rawId)
 		} else {
 			rawPRVersion = fmt.Sprintf("%s.%s", rawPRVersion, rawId)
 		}
 	}
-	prVersion, _ := parsePrerelease(rawPRVersion)
+	prVersion, _ := ParsePRVersion(rawPRVersion)
 	return prVersion
 }
 
@@ -71,7 +76,7 @@ func (v VersionPattern) FirstBuildMetadata() BuildMetadata {
 			rawBuildMetadata = fmt.Sprintf("%s.%s", rawBuildMetadata, rawId)
 		}
 	}
-	buildMetadata, _ := parseBuildMetadata(rawBuildMetadata)
+	buildMetadata, _ := ParseBuildMetadata(rawBuildMetadata)
 	return buildMetadata
 }
 
@@ -265,6 +270,17 @@ type ReleasePattern struct {
 	Major ReleaseDigitPattern
 	Minor ReleaseDigitPattern
 	Patch ReleaseDigitPattern
+}
+
+func (r ReleasePattern) String() string {
+	return fmt.Sprintf("%s.%s.%s", r.Major.Value(), r.Minor.Value(), r.Patch.Value())
+}
+
+func (r ReleasePattern) IsStrict() bool {
+	if r.Major.Value() == Wildcard || r.Minor.Value() == Wildcard || r.Patch.Value() == Wildcard {
+		return false
+	}
+	return true
 }
 
 type ReleaseDigitPattern struct {

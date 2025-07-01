@@ -205,11 +205,6 @@ func newBuildIdentifier(v string) models.BuildIdentifier {
 	return i
 }
 
-func newPRVersion(identifiers []string) (p models.PRVersion) {
-	p, _ = models.ParsePRVersion(identifiers)
-	return
-}
-
 func TestApplyFilters(t *testing.T) {
 	type args struct {
 		versions models.VersionSlice

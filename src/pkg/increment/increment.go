@@ -8,6 +8,26 @@ import (
 	"strconv"
 )
 
+// TODO write test
+func IncrementVersion(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (incrementedVersion models.Version, err error) {
+	if streamPattern.IsEmpty() {
+		streamPattern, _ = models.ParseVersionPattern("*.*.*")
+	}
+
+	if streamPattern.IsPRPattern() {
+		incrementedVersion, err = IncrementPReleaseToStream(sourceVersions, streamPattern, increment)
+
+	} else if streamPattern.IsReleaseOnlyPattern() {
+		incrementedVersion, err = IncrementReleaseToStream(sourceVersions, streamPattern, increment)
+
+	} else {
+		err = fmt.Errorf("error: stream pattern or increment level is required") // TODO default to patch increment
+
+	}
+
+	return incrementedVersion, err
+}
+
 func IncrementRelease(sourceVersion models.Version, increment models.Increment) models.Version {
 	incrementedVersion := sourceVersion
 	if increment == models.Major {
@@ -39,29 +59,44 @@ func IncrementReleaseToStream(sourceVersions []models.Version, streamPattern mod
 	return IncrementRelease(sourceVersion, increment), nil
 }
 
-func IncrementPReleaseToStream(sourceVersion models.Version, targetStream models.VersionPattern, versionList []models.Version) (models.Version, error) {
-	if targetStream.IsReleaseOnlyPattern() {
+func IncrementPReleaseToStream(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (models.Version, error) {
+	newVersion := models.Version{}
+	if streamPattern.IsReleaseOnlyPattern() {
 		return models.Version{}, fmt.Errorf("error: stream pattern must be prerelease only")
 	}
 
-	newVersion := promoteToTargetStream(targetStream, sourceVersion)
-	versionList = append(versionList, sourceVersion)
-	highestStreamVersion, err := filter.GetHighestStreamVersion(versionList, targetStream)
-
-	if highestStreamVersion.IsHigherThan(newVersion) && isStreamEmpty(err) {
-
-		highestStreamVersion.Prerelease = PrereleaseIncrement(highestStreamVersion.Prerelease)
-		newVersion = highestStreamVersion
-	} else if highestStreamVersion.IsEqualTo(newVersion) {
-
-		newVersion.Prerelease = PrereleaseIncrement(newVersion.Prerelease)
+	highestStreamVersion, err := filter.GetHighestStreamVersionWithReleases(sourceVersions, streamPattern)
+	if err != nil {
+		if isStreamEmpty(err) {
+			return streamPattern.FirstVersion(), nil
+		}
+		return models.Version{}, err
 	}
+
+	streamVersion := streamPattern.FirstVersion()
+
+	if !streamVersion.IsHigherThan(highestStreamVersion) {
+		if !streamVersion.Release.IsHigherThan(highestStreamVersion.Release) && increment == models.None && highestStreamVersion.IsRelease() {
+			increment = models.Patch
+		}
+		newVersion = IncrementRelease(highestStreamVersion, increment)
+
+		if !streamVersion.Prerelease.IsHigherThan(highestStreamVersion.Prerelease) {
+			newVersion.Prerelease = PrereleaseIncrement(highestStreamVersion.Prerelease)
+		} else {
+			newVersion.Prerelease = streamVersion.Prerelease
+		}
+
+	} else {
+		newVersion = streamVersion
+	}
+
 	return newVersion, nil
 }
 
 func isStreamEmpty(err error) bool {
 	_, ok := err.(*models.EmptyVersionListError)
-	return !ok
+	return ok
 }
 
 func PrereleaseIncrement(prVersion models.PRVersion) models.PRVersion {
@@ -151,53 +186,4 @@ func GetIncrementType(highestRelease models.Version, comparedTo models.Version) 
 		return models.Patch
 	}
 	return models.None
-}
-
-func promoteToTargetStream(targetStream models.VersionPattern, sourceVersion models.Version) (promotedVersion models.Version) {
-
-	promotedVersion.Release = promoteToTargetStreamRelease(targetStream.Release, sourceVersion.Release)
-
-	if !targetStream.IsReleaseOnlyPattern() {
-		promotedVersion.Prerelease = promoteToTargetPrereleaseStream(targetStream.Prerelease.Identifiers, sourceVersion, promotedVersion)
-	}
-
-	return promotedVersion
-}
-
-func promoteToTargetPrereleaseStream(targetStream []models.PRIdentifierPattern, sourceVersion models.Version, promotedVersion models.Version) models.PRVersion {
-
-	for _, targetId := range targetStream {
-
-		if targetId.Value() == models.Wildcard {
-			newId := models.PRIdentifier{}
-			newId.Set("0")
-			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
-
-		} else {
-			newId := models.PRIdentifier{}
-			newId.Set(targetId.Value())
-			promotedVersion.Prerelease.Identifiers = append(promotedVersion.Prerelease.Identifiers, newId)
-		}
-	}
-	return promotedVersion.Prerelease
-}
-
-func promoteToTargetStreamRelease(targetStreamRelease models.ReleasePattern, sourceRelease models.Release) (newRelease models.Release) {
-
-	newRelease.Major = promotoToStreamReleaseDigit(targetStreamRelease.Major, sourceRelease.Major)
-	newRelease.Minor = promotoToStreamReleaseDigit(targetStreamRelease.Minor, sourceRelease.Minor)
-	newRelease.Patch = promotoToStreamReleaseDigit(targetStreamRelease.Patch, sourceRelease.Patch)
-
-	return newRelease
-}
-
-func promotoToStreamReleaseDigit(targetStream models.ReleaseDigitPattern, sourceDigit models.ReleaseDigit) (newDigit models.ReleaseDigit) {
-	if targetStream.Value() == models.Wildcard {
-		newDigit.Set(sourceDigit.Value())
-	} else {
-		var rawDigit uint64
-		rawDigit, _ = strconv.ParseUint(targetStream.Value(), 10, 64)
-		newDigit.Set(rawDigit)
-	}
-	return newDigit
 }

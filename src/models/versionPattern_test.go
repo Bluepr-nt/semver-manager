@@ -51,12 +51,12 @@ func TestVersionPattern_FirstPrerelease(t *testing.T) {
 		{
 			name:    "Simple pattern",
 			pattern: newVersionPattern("1.0.0-test.*"),
-			want:    newPRVersion("1.0.0-test.0"),
+			want:    newVersion("1.0.0-test.0").Prerelease,
 		},
 		{
 			name:    "Wildcard pattern",
 			pattern: newVersionPattern("1.0.0-*"),
-			want:    newPRVersion("1.0.0-0"),
+			want:    newVersion("1.0.0-0").Prerelease,
 		},
 	}
 	for _, tt := range tests {
@@ -230,16 +230,16 @@ func newVersionPattern(s string) VersionPattern {
 }
 
 func newBuildMetadata(s string) BuildMetadata {
-	buildMetadata, _ := parseBuildMetadata(s)
+	buildMetadata, _ := ParseBuildMetadata(s)
 	return buildMetadata
 }
 
-func newPRVersion(s string) PRVersion {
-	prerelease, _ := parsePrerelease(s)
-	return prerelease
+func newRelease(s string) Release {
+	release, _ := ParseRelease(s)
+	return release
 }
 
-func newRelease(s string) Release {
-	release, _ := parseRelease(s)
-	return release
+func newVersion(s string) Version {
+	version, _ := ParseVersion(s)
+	return version
 }

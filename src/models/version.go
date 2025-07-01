@@ -117,19 +117,31 @@ func (v *Version) String() string {
 
 func ParseVersion(v string) (Version, error) {
 
-	release, err := parseRelease(v)
+	rRelease, rPrerelease, rBuildMetadata := GetVersionComponents(v)
+	release, err := ParseRelease(rRelease)
 	if err != nil {
 		return Version{}, err
 	}
 
-	prVersion, err := parsePrerelease(v)
-	if err != nil {
-		return Version{}, err
+	var prVersion PRVersion
+	if rPrerelease == "" {
+		prVersion = PRVersion{}
+	} else {
+		prVersion, err = ParsePRVersion(rPrerelease)
+		if err != nil {
+			return Version{}, err
+		}
 	}
 
-	buildMetadata, err := parseBuildMetadata(v)
-	if err != nil {
-		return Version{}, err
+	var buildMetadata BuildMetadata
+	if rBuildMetadata == "" {
+		buildMetadata = BuildMetadata{}
+
+	} else {
+		buildMetadata, err = ParseBuildMetadata(rBuildMetadata)
+		if err != nil {
+			return Version{}, err
+		}
 	}
 
 	return Version{
@@ -138,6 +150,39 @@ func ParseVersion(v string) (Version, error) {
 			BuildMetadata: buildMetadata,
 		},
 		nil
+}
+
+func GetVersionComponents(v string) (release, prerelease, buildMetadata string) {
+	release = GetRelease(v)
+	prerelease = GetPrerelease(v)
+	buildMetadata = GetBuildMetadata(v)
+	return release, prerelease, buildMetadata
+
+}
+
+func GetRelease(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	tokens = strings.SplitN(tokens[0], "-", 2)
+
+	return tokens[0]
+}
+
+func GetPrerelease(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	tokens = strings.SplitN(tokens[0], "-", 2)
+	if len(tokens) < 2 {
+		return ""
+	}
+
+	return tokens[1]
+}
+
+func GetBuildMetadata(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	if len(tokens) < 2 {
+		return ""
+	}
+	return tokens[1]
 }
 
 type VersionSlice []Version
@@ -172,12 +217,8 @@ func ParseVersions(vList string) (VersionSlice, error) {
 	return versions, nil
 }
 
-func parseBuildMetadata(v string) (BuildMetadata, error) {
-	tokens := strings.SplitN(v, "+", 2)
-	if len(tokens) < 2 {
-		return BuildMetadata{}, nil
-	}
-	metadata := tokens[1]
+func ParseBuildMetadata(metadata string) (BuildMetadata, error) {
+
 	identifiers := strings.Split(metadata, ".")
 	buildIdentifiers := []BuildIdentifier{}
 	for _, identifier := range identifiers {
@@ -192,7 +233,7 @@ func parseBuildMetadata(v string) (BuildMetadata, error) {
 	}, nil
 }
 
-func parseRelease(v string) (Release, error) {
+func ParseRelease(v string) (Release, error) {
 	release := strings.SplitN(v, "-", 2)[0]
 	release = strings.SplitN(release, "+", 2)[0]
 
@@ -215,27 +256,6 @@ func parseRelease(v string) (Release, error) {
 		Minor: ReleaseDigit{minorUint},
 		Patch: ReleaseDigit{patchUint},
 	}, nil
-}
-
-func parsePrerelease(v string) (PRVersion, error) {
-	tokens := strings.SplitN(v, "+", 2)
-	tokens = strings.SplitN(tokens[0], "-", 2)
-	if len(tokens) < 2 {
-		return PRVersion{}, nil
-	}
-	pr := tokens[1]
-	identifiers := strings.Split(pr, ".")
-	prIdentifiers := []PRIdentifier{}
-	for _, identifier := range identifiers {
-		prIdentifier, err := ParsePrIdentifier(identifier)
-		if err != nil {
-			return PRVersion{}, err
-		}
-		prIdentifiers = append(prIdentifiers, prIdentifier)
-
-	}
-
-	return PRVersion{Identifiers: prIdentifiers}, nil
 }
 
 func parsePatch(v string) (uint64, error) {
@@ -330,7 +350,8 @@ func (pr *PRVersion) String() string {
 	return ""
 }
 
-func ParsePRVersion(identifiers []string) (PRVersion, error) {
+func ParsePRVersion(rawPrerelease string) (PRVersion, error) {
+	identifiers := strings.Split(rawPrerelease, ".")
 	prVersion := PRVersion{}
 	for _, identifier := range identifiers {
 		prIdentifier, err := ParsePrIdentifier(identifier)
