@@ -87,7 +87,6 @@ func getAbsoluteValue(patten Pattern) string {
 	return patten.value
 }
 
-// func getAbsoluteIdentifiers
 func ParseVersionPattern(pattern string) (VersionPattern, error) {
 	release, err := parseReleasePattern(pattern)
 	if err != nil {

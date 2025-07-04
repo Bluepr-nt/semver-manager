@@ -136,10 +136,6 @@ func PrereleasePatternFilter(pattern models.PRVersionPattern) FilterFunc {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			// if version.IsRelease() {
-			// 	filtered = append(filtered, version)
-			// 	continue
-			// } else
 			if !matchPrerelease(pattern.Identifiers, version.Prerelease) {
 				continue
 			}

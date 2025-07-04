@@ -6,5 +6,3 @@ type DatasourceConfig struct {
 	Token      string
 	Platform   string
 }
-
-// ^.1.^

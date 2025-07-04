@@ -1,9 +1,6 @@
 package increment
 
 import (
-	"errors"
-	"fmt"
-
 	"src/cmd/smgr/cmd/utils"
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/pkg/filter"
@@ -13,13 +10,11 @@ import (
 )
 
 type config struct {
-	dryRun        bool
-	incrementType string
-	// sourceVersion  string
+	dryRun         bool
+	incrementType  string
 	sourceVersions string
-	// repository     string
-	// sourceStream   string
-	targetStream string
+	repository     string
+	targetStream   string
 }
 
 func NewIncrementCommand() *cobra.Command {
@@ -32,12 +27,12 @@ Increment a version according to one of the required flags --level or --target-s
 and any combination of the optional flags:
 
 - Use --level to specify the increment level (major, minor, patch).
-- Define the source with --repository, --source-stream, --source-version, or --source-versions.
+- Define the source with --repository, --source-stream, --source-version, or --source-versions. (Only --source-versions is currently implemented)
 
 Increment a version according to the provided:
   - Increment level (major, minor, patch)
   - The source, any of: repository, source-stream, source-version, source-versions
-  - 
+  - The target stream, if specified, e.g. 1.2.* (optional)
   `,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		},
@@ -51,28 +46,15 @@ Increment a version according to the provided:
 			level, _ := cmd.Flags().GetString("level")
 			targetStream, _ := cmd.Flags().GetString("target-stream")
 
-			tmp := fmt.Sprintf("targetstream %s", targetStream)
-			fmt.Println(tmp)
-			if level == "" {
-				fmt.Println("level is empty")
-			}
-			if targetStream == "" {
-				fmt.Println("targetstream is empty")
-			}
 			if level == "" && targetStream == "" {
-				cmd.Usage()                                                                     // Prints usage information
-				return errors.New("error: either --level or --target-stream must be specified") // TODO default to patch
+				cmd.Flags().Set("level", string(models.Patch))
 			}
 
 			return RunIncrement(config, cmd)
 		},
 	}
 
-	// TODO require level or target stream
-
 	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch (defaults to patch if --target-stream not specified)")
-	// incrementCmd.Flags().StringVarP(&config.sourceVersion, "source-version", "V", "0.0.0", "The source version to increment from")
-	// incrementCmd.Flags().StringVarP(&config.sourceStream, "source-stream", "s", "", "The source stream to increment from ")
 	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to e.g. 1.2.* (optional)")
 	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from e.g. \"0.0.0,1.0.0,1.1.0\" (optional)")
 	// incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of e.g. https://github.com/<user|org>/<repo> (optional)")

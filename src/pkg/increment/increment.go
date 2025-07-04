@@ -8,7 +8,6 @@ import (
 	"strconv"
 )
 
-// TODO write test
 func IncrementVersion(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (incrementedVersion models.Version, err error) {
 	if streamPattern.IsEmpty() {
 		streamPattern, _ = models.ParseVersionPattern("*.*.*")
@@ -17,11 +16,8 @@ func IncrementVersion(sourceVersions []models.Version, streamPattern models.Vers
 	if streamPattern.IsPRPattern() {
 		incrementedVersion, err = IncrementPReleaseToStream(sourceVersions, streamPattern, increment)
 
-	} else if streamPattern.IsReleaseOnlyPattern() {
-		incrementedVersion, err = IncrementReleaseToStream(sourceVersions, streamPattern, increment)
-
 	} else {
-		err = fmt.Errorf("error: stream pattern or increment level is required") // TODO default to patch increment
+		incrementedVersion, err = IncrementReleaseToStream(sourceVersions, streamPattern, increment)
 
 	}
 

@@ -40,6 +40,5 @@ func IncrementVersion(versionList []Version, i Increment, targetStream VersionPa
 			highest = version
 		}
 	}
-	// get highest release
 	return nil
 }

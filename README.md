@@ -17,61 +17,57 @@ Semver-Manager is a command-line interface (CLI) tool that streamlines semantic 
 
 ### Implemented
 
-- Increment
-  - Release  
-    The increment command allows to increment a version's MAJOR, MINOR or PATCH number  
-    Behaviors:  
-    If no version exists and no release stream is no provided -> Creates version 0.0.1
-  - Pre-Release
-  - Target Stream
-    When a target stream if specified, it will create new version on that stream. When incrementing, all releases matching the release pattern are considered even if they don't match the pre-release pattern. e.g. 1.1.1 will match _._.\*-alpha unlike the filter command
-- Fetch  
-  The fetch command allows to fetch semantic versions from multiple platforms and filter them
-  The fetch command is automatically chained with the filter command  
-  Platforms:
+#### Increment Command
 
-  - Github
+- **Purpose**: Increments version numbers (MAJOR.MINOR.PATCH) with optional pre-release support
+- **Default**: Creates 0.0.1 if no version exists
+- **Target Stream**: Creates new version on specified stream, considers all matching releases
+- **Pre-release**: Supports pre-release patterns (e.g., 1.0.0-alpha, 1.0.0-beta)
 
-- Filter
-  - Highest: returns the highest semver found, is always run after all other filters
-  - Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in the stream filter pattern. e.g. 1.1.1 won't match _._.\*-alpha
-    Examples:
-    - Pattern: 1.\*.\*
-      Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
-      Result: 1.1.1, 1.1.1+build01
-    - Pattern: \*.\*.\*+AMD
-      Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
-      Result: 1.1.1+AMD
-    - Pattern: 1.0.0-Beta.\*
-      Versions: 1.0.0-Alpha.0, 1.0.0-Beta.0, 1.0.0-Beta.1
-      Result: 1.0.0-Beta.0, 1.0.0-Beta.1
-    - Pattern: 1.0.0-Beta
-      Versions: 0.1.0-Alpha, 0.1.0-Beta, 1.0.0-Beta
-      Result: 1.0.0-Beta
-    - Pattern: 1.0.0-Beta.\*
-      Versions: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
-      Result: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
-    - Pattern: 1.0.0-\*.Beta.\*
-      Versions: 1.0.0-0.Alpha.0, 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
-      Result: 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
-    - Pattern:
-      Versions:
-      Result:
-    - Pattern:
-      Versions:
-      Result:
-    - Pattern:
-      Versions:
-      Result:
-    - Pattern:
-      Versions:
-      Result:
-    - Pattern:
-      Versions:
-      Result:
-    - Pattern:
-      Versions:
-      Result:
+Usage:
+
+```bash
+# Basic increment
+smgr increment --level [major|minor|patch]
+
+# Target stream with pre-release
+smgr increment --target-stream "1.2.*-alpha"
+
+# From specific versions
+smgr increment --source-versions "0.0.0,1.0.0-beta,1.1.0"
+```
+
+#### Fetch
+
+The fetch command allows to fetch semantic versions from multiple platforms and filter them
+The fetch command is automatically chained with the filter command  
+ Platforms:
+
+- Github
+
+#### Filter
+
+- Highest: returns the highest semver found, is always run after all other filters
+- Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in the stream filter pattern. e.g. 1.1.1 won't match _._.\*-alpha
+  Examples:
+  - Pattern: 1.\*.\*
+    Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
+    Result: 1.1.1, 1.1.1+build01
+  - Pattern: \*.\*.\*+AMD
+    Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
+    Result: 1.1.1+AMD
+  - Pattern: 1.0.0-Beta.\*
+    Versions: 1.0.0-Alpha.0, 1.0.0-Beta.0, 1.0.0-Beta.1
+    Result: 1.0.0-Beta.0, 1.0.0-Beta.1
+  - Pattern: 1.0.0-Beta
+    Versions: 0.1.0-Alpha, 0.1.0-Beta, 1.0.0-Beta
+    Result: 1.0.0-Beta
+  - Pattern: 1.0.0-Beta.\*
+    Versions: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
+    Result: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
+  - Pattern: 1.0.0-\*.Beta.\*
+    Versions: 1.0.0-0.Alpha.0, 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
+    Result: 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
 
 ### To do
 
@@ -139,7 +135,7 @@ go install github.com/13013SwagR/semver-manager/smgr@<git_ref>
 ## Usage
 
 ```
-Manage Semantic Versioning compliant versions and integrate with popular or registry platform to facilitate the task.
+Manage Semantic Versioning compliant versions and integrate with popular repository and registry platform to facilitate the task.
 
 Usage:
   smgr [flags]
@@ -147,8 +143,10 @@ Usage:
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
-  fetch       Fetch semver tags from a registry or repository.
+  fetch       Fetch semver tags from a repository.
+  filter      Filter is a CLI tool for filtering versions
   help        Help about any command
+  increment   Increment a version
 
 Flags:
       --add_dir_header                   If true, adds the file directory to the header of the log messages

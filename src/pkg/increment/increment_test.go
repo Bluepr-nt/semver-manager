@@ -566,3 +566,113 @@ func TestPromotePRVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestIncrementVersion(t *testing.T) {
+
+	tests := []struct {
+		name                   string
+		sourceVersions         []models.Version
+		streamPattern          models.VersionPattern
+		increment              models.Increment
+		wantIncrementedVersion models.Version
+		wantErr                bool
+	}{
+		{
+			name: "Increment patch version",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("1.0.0"),
+				testutils.NewVersion("1.0.1"),
+				testutils.NewVersion("1.0.2"),
+			},
+			streamPattern:          testutils.NewVersionPattern("1.0.*"),
+			increment:              models.Patch,
+			wantIncrementedVersion: testutils.NewVersion("1.0.3"),
+			wantErr:                false,
+		},
+		{
+			name: "Increment minor version",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("1.0.0"),
+				testutils.NewVersion("1.1.0"),
+				testutils.NewVersion("1.2.0"),
+			},
+			streamPattern:          testutils.NewVersionPattern("1.*.*"),
+			increment:              models.Minor,
+			wantIncrementedVersion: testutils.NewVersion("1.3.0"),
+			wantErr:                false,
+		},
+		{
+			name: "Increment major version",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("1.0.0"),
+				testutils.NewVersion("2.0.0"),
+				testutils.NewVersion("3.0.0"),
+			},
+			streamPattern:          testutils.NewVersionPattern("*.0.0"),
+			increment:              models.Major,
+			wantIncrementedVersion: testutils.NewVersion("4.0.0"),
+			wantErr:                false,
+		},
+		{
+			name:                   "Increment with empty source versions",
+			sourceVersions:         []models.Version{},
+			streamPattern:          testutils.NewVersionPattern("1.0.*"),
+			increment:              models.Patch,
+			wantIncrementedVersion: testutils.NewVersion("1.0.0"),
+			wantErr:                false,
+		},
+		{
+			name: "Increment with no matching stream pattern",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("1.0.0"),
+				testutils.NewVersion("1.0.1"),
+				testutils.NewVersion("1.0.2"),
+			},
+			streamPattern:          testutils.NewVersionPattern("2.0.*"),
+			increment:              models.Patch,
+			wantIncrementedVersion: testutils.NewVersion("2.0.0"),
+			wantErr:                false,
+		},
+		{
+			name:                   "Increment with no source versions and no stream pattern",
+			sourceVersions:         []models.Version{},
+			streamPattern:          models.VersionPattern{},
+			increment:              models.Patch,
+			wantIncrementedVersion: testutils.NewVersion("0.0.0"),
+			wantErr:                false,
+		},
+		{
+			name: "Increment with PreRelease stream pattern",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("1.0.0-alpha.1"),
+				testutils.NewVersion("1.0.0-alpha.2"),
+				testutils.NewVersion("1.0.0-alpha.3"),
+			},
+			streamPattern:          testutils.NewVersionPattern("1.0.*-alpha.*"),
+			increment:              models.None,
+			wantIncrementedVersion: testutils.NewVersion("1.0.0-alpha.4"),
+			wantErr:                false,
+		},
+		{
+			name:                   "Increment with PreRelease stream pattern and no source versions",
+			sourceVersions:         []models.Version{},
+			streamPattern:          testutils.NewVersionPattern("1.0.*-alpha.*"),
+			increment:              models.None,
+			wantIncrementedVersion: testutils.NewVersion("1.0.0-alpha.0"),
+			wantErr:                false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotIncrementedVersion, err := IncrementVersion(tt.sourceVersions, tt.streamPattern, tt.increment)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, models.Version{}, gotIncrementedVersion)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantIncrementedVersion, gotIncrementedVersion)
+			}
+		})
+	}
+}

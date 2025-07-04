@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"src/cmd/smgr/cmd/filter"
 
-	// "fmt"
 	"os"
 	"testing"
 
