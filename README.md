@@ -74,10 +74,16 @@ The fetch command is automatically chained with the filter command
 #### Fetch
 
 - Implement additional platforms: gitlab, local git repository, oci repository, ghrc.io, npm, text file
+- Add logs on long fetch
 
 #### Namespacing
 
 - On fetch, increment, filter, maybe all commands?
+
+#### Increment
+
+- Add input source versions from fetch command
+- Add automated git context to build metadata
 
 #### Filter
 

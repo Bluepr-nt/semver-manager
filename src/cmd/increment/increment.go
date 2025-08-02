@@ -56,7 +56,7 @@ Increment a version according to the provided:
 
 	incrementCmd.Flags().StringVarP(&config.incrementType, "level", "l", string(models.Patch), "The level of increment to perform, options: major, minor, patch (defaults to patch if --target-stream not specified)")
 	incrementCmd.Flags().StringVarP(&config.targetStream, "target-stream", "t", "", "The target stream to increment to e.g. 1.2.* (optional)")
-	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "u", "", "The source versions to increment from e.g. \"0.0.0,1.0.0,1.1.0\" (optional)")
+	incrementCmd.Flags().StringVarP(&config.sourceVersions, "source-versions", "s", "", "The source versions to increment from e.g. \"0.0.0,1.0.0,1.1.0\" (optional)")
 	// incrementCmd.Flags().StringVarP(&config.repository, "repository", "r", "", "The repository to increment the version of e.g. https://github.com/<user|org>/<repo> (optional)")
 
 	return incrementCmd

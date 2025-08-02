@@ -5,13 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug go",
+      "name": "Debug increment",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${fileDirname}",
       "env": {},
       "args": ["increment"]
+    },
+        {
+      "name": "Debug fetch",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/src/cmd/smgr/smgr.go",
+      "env": {},
+      "args": ["fetch", "-o", "bluepr-nt", "-r", "semver-manager", "-t", "github_pat_<token>"]
     }
   ]
 }

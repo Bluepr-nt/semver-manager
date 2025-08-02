@@ -17,3 +17,4 @@ smgr
 fetch_test.yaml
 
 .devbox/
+.env

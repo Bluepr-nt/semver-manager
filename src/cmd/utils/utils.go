@@ -14,6 +14,7 @@ const (
 	envPrefix             = "CCS"
 )
 
+// TODO this is not working as expected
 func InitializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
 	v.SetConfigName(defaultConfigFilename)
@@ -25,7 +26,7 @@ func InitializeConfig(cmd *cobra.Command) error {
 	}
 	v.SetEnvPrefix(envPrefix)
 	v.AutomaticEnv()
-	
+
 	return nil
 }
 
