@@ -36,7 +36,8 @@ func TestNewFilterCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			filtercmd := NewFilterCommand()
+			filterArgs := &FilterArgs{}
+			filtercmd := NewFilterCommand(filterArgs)
 			output, err := executeCommand(filtercmd, test.inputArgs...)
 
 			if test.expectedError {

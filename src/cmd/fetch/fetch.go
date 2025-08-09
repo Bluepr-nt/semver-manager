@@ -1,10 +1,9 @@
 package fetch
 
 import (
+	"src/cmd/smgr/cmd/filter"
 	"src/cmd/smgr/cmd/utils"
 	datasourceUtils "src/cmd/smgr/datasource/utils"
-	"src/cmd/smgr/models"
-
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -19,7 +18,7 @@ type config struct {
 	dryRun     bool
 }
 
-func NewFetchCommand(filterCmd *cobra.Command) *cobra.Command {
+func NewFetchCommand(filterArgs *filter.FilterArgs) *cobra.Command {
 	config := &config{}
 	var fetchCmd = &cobra.Command{
 		Use:   "fetch",
@@ -38,20 +37,18 @@ fetched versions.`,
 			dryRun, _ := cmd.PersistentFlags().GetBool("dry-run")
 			config.dryRun = dryRun
 
-			return RunFetchSemverTags(config, cmd, filterCmd)
+			return RunFetchSemverTags(config, cmd, filterArgs)
 		},
 	}
 	fetchCmd.Flags().StringVarP(&config.Owner, "owner", "o", "", "The owner of the registry or repository")
 	fetchCmd.Flags().StringVarP(&config.Repository, "repo", "r", "", "The repository or registry to fetch the Semver tags from")
 	fetchCmd.Flags().StringVarP(&config.Token, "token", "t", "", "The token to access the repository")
 	fetchCmd.Flags().StringVarP(&config.Platform, "platform", "p", "github", "The platform to fetch the Semver from, options: github")
-	if filterCmd != nil {
-		fetchCmd.Flags().AddFlagSet(filterCmd.Flags())
-	}
+
 	return fetchCmd
 }
 
-func RunFetchSemverTags(config *config, cmd *cobra.Command, filterCmd *cobra.Command) error {
+func RunFetchSemverTags(config *config, cmd *cobra.Command, filterArgs *filter.FilterArgs) error {
 
 	datasource := newDatasource(config.dryRun, config.Platform, config.Token)
 
@@ -60,30 +57,13 @@ func RunFetchSemverTags(config *config, cmd *cobra.Command, filterCmd *cobra.Com
 	if err != nil {
 		return err
 	}
-
-	if filterCmd != nil {
-		klog.V(1).Info("Filtering tags...")
-		cliTags, err := filterCmd.Flags().GetString("versions")
-		if err != nil {
-			return err
-		}
-		// TODO Why split then merge again?
-		if len(cliTags) > 0 {
-			klog.V(2).Infof("Merging tags: %s", cliTags)
-			semverTags = append(semverTags, models.SplitVersions(cliTags)...)
-		}
-		err = filterCmd.Flags().Set("versions", strings.Join(semverTags, " "))
-		if err != nil {
-			return err
-		}
-
-		err = filterCmd.Execute()
-		if err != nil {
-			return err
-		}
-	} else {
-		cmd.Println(strings.Join(semverTags, " "))
+	klog.V(1).Infof("Fetched %d tags", len(semverTags))
+	filterArgs.Versions = strings.Join(semverTags, " ")
+	filteredTags, err := filter.Filter(filterArgs)
+	if err != nil {
+		return err
 	}
+	cmd.Println(filteredTags.String())
 
 	return nil
 }

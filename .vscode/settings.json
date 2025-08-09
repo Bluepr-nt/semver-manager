@@ -29,4 +29,5 @@
   "go.coverOnSingleTest": true,
   "go.coverOnSingleTestFile": true,
   "go.diagnostic.vulncheck": "Imports",
+  "go.testEnvFile": ".env.tests"
 }

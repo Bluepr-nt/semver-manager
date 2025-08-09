@@ -37,8 +37,9 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 
 	cmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
 	cmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
-	filterCmd := filter.NewFilterCommand()
-	fetchCmd := fetch.NewFetchCommand(filterCmd)
+	filterArgs := &filter.FilterArgs{}
+	filterCmd := filter.NewFilterCommand(filterArgs)
+	fetchCmd := fetch.NewFetchCommand(filterArgs)
 	incrementCmd := increment.NewIncrementCommand()
 	cmd.AddCommand(filterCmd, fetchCmd, incrementCmd)
 

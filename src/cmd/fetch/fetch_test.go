@@ -40,7 +40,10 @@ func TestNewFetchCommand(t *testing.T) {
 	})
 
 	t.Run("Command has expected flags", func(t *testing.T) {
-		cmd := NewFetchCommand(filter.NewFilterCommand())
+		filterArgs := &filter.FilterArgs{}
+		cmd := NewFetchCommand(filterArgs)
+		filterCmd := filter.NewFilterCommand(filterArgs)
+		cmd.Flags().AddFlagSet(filterCmd.Flags())
 		flags := cmd.Flags()
 		expectedFlags := []string{"owner", "repo", "token", "platform", "highest"}
 		for _, expectedFlag := range expectedFlags {
@@ -101,12 +104,13 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			output := new(bytes.Buffer)
-
-			filterCmd := filter.NewFilterCommand()
+			filterArgs := &filter.FilterArgs{}
+			filterCmd := filter.NewFilterCommand(filterArgs)
 			filterCmd.SetOut(output)
 			filterCmd.SetErr(output)
 
-			cmd := NewFetchCommand(filterCmd)
+			cmd := NewFetchCommand(filterArgs)
+			cmd.Flags().AddFlagSet(filterCmd.Flags())
 			cmd.SetOut(output)
 			cmd.SetErr(output)
 

@@ -18,3 +18,4 @@ fetch_test.yaml
 
 .devbox/
 .env
+.env.tests
