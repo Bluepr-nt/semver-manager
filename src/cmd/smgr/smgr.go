@@ -40,6 +40,7 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 	filterArgs := &filter.FilterArgs{}
 	filterCmd := filter.NewFilterCommand(filterArgs)
 	fetchCmd := fetch.NewFetchCommand(filterArgs)
+	fetchCmd.Flags().AddFlagSet(filterCmd.Flags())
 	incrementCmd := increment.NewIncrementCommand()
 	cmd.AddCommand(filterCmd, fetchCmd, incrementCmd)
 
