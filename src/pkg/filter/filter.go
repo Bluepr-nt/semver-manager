@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"fmt"
 	"src/cmd/smgr/models"
 	"strconv"
 
@@ -27,7 +26,7 @@ func ApplyFilters(versions []models.Version, filters ...FilterFunc) (models.Vers
 func Highest() FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		if len(versions) == 0 {
-			return versions, fmt.Errorf("error version list is empty")
+			return versions, &models.EmptyVersionListError{}
 		}
 
 		highest := versions[0]
@@ -44,13 +43,130 @@ func Highest() FilterFunc {
 	}
 }
 
+func GetHighestStreamVersion(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
+	var err error
+	streamFilter := VersionPatternFilter(streamPattern)
+	highestFilter := Highest()
+	sourceVersion, err := ApplyFilters(versions, streamFilter, highestFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+	return sourceVersion[0], nil
+}
+
+func GetHighestStreamVersionWithReleases(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
+
+	streamFilter := VersionPatternFilter(streamPattern)
+	sourceVersions, err := ApplyFilters(versions, streamFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+
+	if !streamPattern.Release.IsStrict() {
+		releaseOnlyFilter := VersionPatternFilter(models.VersionPattern{Release: streamPattern.Release, Prerelease: models.PRVersionPattern{}, Build: streamPattern.Build})
+		sourceReleaseVersion, err := ApplyFilters(versions, releaseOnlyFilter)
+		if err != nil {
+			return models.Version{}, err
+		}
+
+		sourceVersions = append(sourceVersions, sourceReleaseVersion...)
+	}
+
+	highestFilter := Highest()
+	highestVersion, err := ApplyFilters(sourceVersions, highestFilter)
+	if err != nil {
+		return models.Version{}, err
+	}
+
+	return highestVersion[0], nil
+}
+
+// VersionPatternFilter returns a filter function that
+// filters versions based on a VersionPattern
+func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
+
+	return func(versions []models.Version) ([]models.Version, error) {
+
+		var filtered []models.Version
+		releaseFilter := ReleasePatternFilter(pattern.Release)
+		prereleaseFilter := PrereleasePatternFilter(pattern.Prerelease)
+		buildMetadataFilter := BuildMetadataFilter(pattern.Build)
+
+		filtered, err := ApplyFilters(versions, releaseFilter, prereleaseFilter, buildMetadataFilter)
+		if err != nil {
+			return nil, err
+		}
+
+		return filtered, nil
+	}
+}
+
+// ReleasePatternFilter returns a filter function that
+// filters versions based on a ReleasePattern
+// all release and prelease versions are returned
+func ReleasePatternFilter(pattern models.ReleasePattern) FilterFunc {
+	return func(versions []models.Version) ([]models.Version, error) {
+		var filtered []models.Version
+
+		for _, version := range versions {
+			if pattern.Major.Value() != "*" && version.Release.Major.String() != pattern.Major.Value() {
+				continue
+			}
+			if pattern.Minor.Value() != "*" && version.Release.Minor.String() != pattern.Minor.Value() {
+				continue
+			}
+			if pattern.Patch.Value() != "*" && version.Release.Patch.String() != pattern.Patch.Value() {
+				continue
+			}
+
+			filtered = append(filtered, version)
+		}
+
+		return filtered, nil
+	}
+}
+
+// PrereleasePatternFilter returns a filter function that
+// filters versions based on a PrereleasePattern
+// prerelease versions are returned
+// all release versions are also returned
+func PrereleasePatternFilter(pattern models.PRVersionPattern) FilterFunc {
+	return func(versions []models.Version) ([]models.Version, error) {
+
+		var filtered []models.Version
+
+		for _, version := range versions {
+			if !matchPrerelease(pattern.Identifiers, version.Prerelease) {
+				continue
+			}
+
+			filtered = append(filtered, version)
+		}
+
+		return filtered, nil
+	}
+}
+
+// GetValidVersions returns a list of valid versions from one or more string lists of versions
+// The versions are split by comma or space and then parsed into a Version struct
+func GetValidVersions(stringVersionsList ...string) []models.Version {
+	var versions []models.Version
+	for _, stringVersions := range stringVersionsList {
+		for _, stringVersion := range models.SplitVersions(stringVersions) {
+			version, _ := models.ParseVersion(stringVersion)
+			versions = append(versions, version)
+		}
+	}
+	return versions
+}
+
 func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
 	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
 		return false
 	}
 
 	for i, prIdentifierPattern := range prIdentifiersPattern {
-		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].String() {
+		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].Value() {
 			return false
 		}
 	}
@@ -63,27 +179,17 @@ func toUint(s string) uint64 {
 	return v
 }
 
-func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
+func BuildMetadataFilter(pattern models.BuildMetadataPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
 		var filtered []models.Version
 
 		for _, version := range versions {
-			if pattern.Release.Major.Value() != "*" && version.Release.Major != toUint(pattern.Release.Major.Value()) {
+			if len(pattern.Identifiers) == 0 {
+				filtered = append(filtered, version)
 				continue
 			}
-			if pattern.Release.Minor.Value() != "*" && version.Release.Minor != toUint(pattern.Release.Minor.Value()) {
-				continue
-			}
-			if pattern.Release.Patch.Value() != "*" && version.Release.Patch != toUint(pattern.Release.Patch.Value()) {
-				continue
-			}
-			if len(pattern.Prerelease.Identifiers) > 0 && !matchPrerelease(pattern.Prerelease.Identifiers, version.Prerelease) {
-				continue
-			} else if len(pattern.Prerelease.Identifiers) == 0 && len(version.Prerelease.Identifiers) > 0 {
-				continue
-			}
-			// Checking build metadata
-			if len(pattern.Build.Identifiers) > 0 && !matchBuildMetadata(pattern.Build.Identifiers, version.BuildMetadata) {
+
+			if !matchBuildMetadata(pattern.Identifiers, version.BuildMetadata) {
 				continue
 			}
 
@@ -106,15 +212,4 @@ func matchBuildMetadata(buildIdentifiersPattern []models.BuildIdentifierPattern,
 	}
 
 	return true
-}
-
-func GetVersions(stringVersions string) []models.Version {
-	var versions []models.Version
-
-	for _, stringVersion := range models.SplitVersions(stringVersions) {
-		version, _ := models.ParseVersion(stringVersion)
-		versions = append(versions, version)
-	}
-
-	return versions
 }

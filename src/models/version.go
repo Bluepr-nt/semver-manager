@@ -10,25 +10,104 @@ const (
 	numbers  string = "0123456789"
 	alphas          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 	alphanum        = alphas + numbers
-	Major           = "major"
-	Minor           = "minor"
-	Patch           = "patch"
 )
 
 type Release struct {
-	Major uint64
-	Minor uint64
-	Patch uint64
+	Major ReleaseDigit
+	Minor ReleaseDigit
+	Patch ReleaseDigit
+}
+
+// IsEqualTo compares two Releases and returns true if they are equal
+func (r Release) IsEqualTo(releaseB Release) bool {
+	return r.Major == releaseB.Major && r.Minor == releaseB.Minor && r.Patch == releaseB.Patch
+}
+
+func (r Release) IsHigherThan(rB Release) bool {
+	if r.Major.GT(rB.Major) {
+		return true
+	}
+
+	if r.Major == rB.Major && r.Minor.GT(rB.Minor) {
+		return true
+	}
+
+	if r.Major == rB.Major && r.Minor == rB.Minor && r.Patch.GT(rB.Patch) {
+		return true
+	}
+
+	return false
 }
 
 func (r *Release) String() string {
-	return fmt.Sprintf("%d.%d.%d", r.Major, r.Minor, r.Patch)
+	return fmt.Sprintf("%d.%d.%d", r.Major.value, r.Minor.value, r.Patch.value)
+}
+
+type ReleaseDigit struct {
+	value uint64
+}
+
+func (r *ReleaseDigit) Increment() {
+	r.value = r.value + 1
+}
+
+func (r ReleaseDigit) GT(cmp ReleaseDigit) bool {
+	return r.value > cmp.value
+}
+
+func (r ReleaseDigit) LT(cmp ReleaseDigit) bool {
+	return r.value < cmp.value
+}
+
+func (r *ReleaseDigit) Set(d uint64) {
+	r.value = d
+}
+
+func (r ReleaseDigit) String() string {
+	stringValue := fmt.Sprintf("%d", r.value)
+	return stringValue
+}
+
+func (r ReleaseDigit) Value() uint64 {
+	return r.value
 }
 
 type Version struct {
 	Release       Release
 	Prerelease    PRVersion
 	BuildMetadata BuildMetadata
+}
+
+func (v Version) IsRelease() bool {
+	return len(v.Prerelease.Identifiers) < 1
+}
+
+// IsEqualTo compares two Versions and returns true if they are equal
+// Build metadata is ignored in the comparison as per the Semver specification
+func (v *Version) IsEqualTo(versionB Version) bool {
+	if v.Release.IsEqualTo(versionB.Release) && v.Prerelease.IsEqualTo(versionB.Prerelease) {
+		return true
+	}
+	return false
+}
+
+// IsHigherThan compares two Versions and returns true if the first version is higher than the second
+// according to the Semver specification
+func (v Version) IsHigherThan(versionB Version) bool {
+
+	if v.Release.IsHigherThan(versionB.Release) {
+		return true
+	}
+
+	if v.IsRelease() && !versionB.IsRelease() {
+		return true
+	}
+
+	if versionB.IsRelease() && !v.IsRelease() {
+		return false
+	}
+
+	return v.Prerelease.IsHigherThan(versionB.Prerelease)
 }
 
 func (v *Version) String() string {
@@ -38,19 +117,31 @@ func (v *Version) String() string {
 
 func ParseVersion(v string) (Version, error) {
 
-	release, err := parseRelease(v)
+	rRelease, rPrerelease, rBuildMetadata := GetVersionComponents(v)
+	release, err := ParseRelease(rRelease)
 	if err != nil {
 		return Version{}, err
 	}
 
-	prVersion, err := parsePrerelease(v)
-	if err != nil {
-		return Version{}, err
+	var prVersion PRVersion
+	if rPrerelease == "" {
+		prVersion = PRVersion{}
+	} else {
+		prVersion, err = ParsePRVersion(rPrerelease)
+		if err != nil {
+			return Version{}, err
+		}
 	}
 
-	buildMetadata, err := parseBuildMetadata(v)
-	if err != nil {
-		return Version{}, err
+	var buildMetadata BuildMetadata
+	if rBuildMetadata == "" {
+		buildMetadata = BuildMetadata{}
+
+	} else {
+		buildMetadata, err = ParseBuildMetadata(rBuildMetadata)
+		if err != nil {
+			return Version{}, err
+		}
 	}
 
 	return Version{
@@ -59,6 +150,39 @@ func ParseVersion(v string) (Version, error) {
 			BuildMetadata: buildMetadata,
 		},
 		nil
+}
+
+func GetVersionComponents(v string) (release, prerelease, buildMetadata string) {
+	release = GetRelease(v)
+	prerelease = GetPrerelease(v)
+	buildMetadata = GetBuildMetadata(v)
+	return release, prerelease, buildMetadata
+
+}
+
+func GetRelease(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	tokens = strings.SplitN(tokens[0], "-", 2)
+
+	return tokens[0]
+}
+
+func GetPrerelease(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	tokens = strings.SplitN(tokens[0], "-", 2)
+	if len(tokens) < 2 {
+		return ""
+	}
+
+	return tokens[1]
+}
+
+func GetBuildMetadata(v string) string {
+	tokens := strings.SplitN(v, "+", 2)
+	if len(tokens) < 2 {
+		return ""
+	}
+	return tokens[1]
 }
 
 type VersionSlice []Version
@@ -76,12 +200,25 @@ func (vs VersionSlice) String() string {
 	return builder.String()
 }
 
-func parseBuildMetadata(v string) (BuildMetadata, error) {
-	tokens := strings.SplitN(v, "+", 2)
-	if len(tokens) < 2 {
-		return BuildMetadata{}, nil
+func ParseVersions(vList string) (VersionSlice, error) {
+
+	versionStrings := SplitVersions(vList)
+	var versions VersionSlice
+
+	for _, rawVersion := range versionStrings {
+		version, err := ParseVersion(rawVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		versions = append(versions, version)
+
 	}
-	metadata := tokens[1]
+	return versions, nil
+}
+
+func ParseBuildMetadata(metadata string) (BuildMetadata, error) {
+
 	identifiers := strings.Split(metadata, ".")
 	buildIdentifiers := []BuildIdentifier{}
 	for _, identifier := range identifiers {
@@ -96,7 +233,7 @@ func parseBuildMetadata(v string) (BuildMetadata, error) {
 	}, nil
 }
 
-func parseRelease(v string) (Release, error) {
+func ParseRelease(v string) (Release, error) {
 	release := strings.SplitN(v, "-", 2)[0]
 	release = strings.SplitN(release, "+", 2)[0]
 
@@ -115,31 +252,10 @@ func parseRelease(v string) (Release, error) {
 		return Release{}, err
 	}
 	return Release{
-		Major: majorUint,
-		Minor: minorUint,
-		Patch: patchUint,
+		Major: ReleaseDigit{value: majorUint},
+		Minor: ReleaseDigit{minorUint},
+		Patch: ReleaseDigit{patchUint},
 	}, nil
-}
-
-func parsePrerelease(v string) (PRVersion, error) {
-	tokens := strings.SplitN(v, "+", 2)
-	tokens = strings.SplitN(tokens[0], "-", 2)
-	if len(tokens) < 2 {
-		return PRVersion{}, nil
-	}
-	pr := tokens[1]
-	identifiers := strings.Split(pr, ".")
-	prIdentifiers := []PRIdentifier{}
-	for _, identifier := range identifiers {
-		prIdentifier, err := ParsePrIdentifier(identifier)
-		if err != nil {
-			return PRVersion{}, err
-		}
-		prIdentifiers = append(prIdentifiers, prIdentifier)
-
-	}
-
-	return PRVersion{Identifiers: prIdentifiers}, nil
 }
 
 func parsePatch(v string) (uint64, error) {
@@ -189,6 +305,39 @@ type PRVersion struct {
 	Identifiers []PRIdentifier
 }
 
+func (pr PRVersion) IsEqualTo(prB PRVersion) bool {
+	if len(pr.Identifiers) != len(prB.Identifiers) {
+		return false
+	}
+
+	for index, identifier := range pr.Identifiers {
+		if !identifier.IsEqualTo(prB.Identifiers[index]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (pr *PRVersion) IsHigherThan(prB PRVersion) bool {
+	for index, identifier := range pr.Identifiers {
+		if len(prB.Identifiers) <= index {
+			return true
+		} else if identifier.IsEqualTo(prB.Identifiers[index]) {
+			continue
+		} else {
+			return identifier.IsHigherThan(prB.Identifiers[index])
+		}
+	}
+	return false
+}
+
+func (pr PRVersion) LastID() PRIdentifier {
+	if len(pr.Identifiers) > 0 {
+		return pr.Identifiers[len(pr.Identifiers)-1]
+	}
+	return PRIdentifier{}
+}
+
 func (pr *PRVersion) String() string {
 	identifierList := []string{}
 	for _, identifier := range pr.Identifiers {
@@ -201,7 +350,8 @@ func (pr *PRVersion) String() string {
 	return ""
 }
 
-func ParsePRVersion(identifiers []string) (PRVersion, error) {
+func ParsePRVersion(rawPrerelease string) (PRVersion, error) {
+	identifiers := strings.Split(rawPrerelease, ".")
 	prVersion := PRVersion{}
 	for _, identifier := range identifiers {
 		prIdentifier, err := ParsePrIdentifier(identifier)
@@ -247,10 +397,27 @@ type PRIdentifier struct {
 	identifier string
 }
 
-func (i *PRIdentifier) String() string {
+func (i PRIdentifier) Value() string {
 	return i.identifier
 }
 
+// IsEqualTo compares two PRIdentifiers and returns true if they are equal
+func (i PRIdentifier) IsEqualTo(identifierB PRIdentifier) bool {
+	return i.identifier == identifierB.identifier
+}
+
+// IsHigherThan compares two PRIdentifiers and returns true if the first identifier is higher than the second
+// according to the Semver specification
+func (i PRIdentifier) IsHigherThan(identifierB PRIdentifier) bool {
+	if containsOnly(i.identifier, numbers) && containsOnly(identifierB.identifier, numbers) {
+		iValue, _ := strconv.ParseUint(i.identifier, 10, 64)
+		identifierBValue, _ := strconv.ParseUint(identifierB.identifier, 10, 64)
+		return iValue > identifierBValue
+	}
+	return i.identifier > identifierB.identifier
+}
+
+// ParsePrIdentifier parses a string into a PRIdentifier
 func ParsePrIdentifier(v string) (PRIdentifier, error) {
 	i := PRIdentifier{}
 	if err := i.Set(v); err != nil {
@@ -259,6 +426,9 @@ func ParsePrIdentifier(v string) (PRIdentifier, error) {
 	return i, nil
 }
 
+// Set sets the PRIdentifier value
+// It returns an error if the value is empty, contains leading zeros,
+// or contains characters other than alphanumerics and hyphens
 func (i *PRIdentifier) Set(v string) error {
 	if len(v) < 1 {
 		return fmt.Errorf("prerelease identifiers MUST NOT be empty, got: %s", v)
@@ -296,9 +466,12 @@ type BuildIdentifier struct {
 	identifier string
 }
 
+// String returns the BuildIdentifier value
 func (i *BuildIdentifier) String() string {
 	return i.identifier
 }
+
+// ParseBuildIdentifier parses a string into a BuildIdentifier
 func ParseBuildIdentifier(v string) (BuildIdentifier, error) {
 	i := BuildIdentifier{}
 	if err := i.Set(v); err != nil {
@@ -307,9 +480,11 @@ func ParseBuildIdentifier(v string) (BuildIdentifier, error) {
 	return i, nil
 }
 
+// Set sets the BuildIdentifier value
+// It returns an error if the value is empty or contains characters other than alphanumerics and hyphens
 func (i *BuildIdentifier) Set(v string) error {
 	if len(v) < 1 {
-		return fmt.Errorf("prerelease identifiers MUST NOT be empty, got: %s", v)
+		return fmt.Errorf("build identifiers MUST NOT be empty, got: %s", v)
 	}
 
 	if !containsOnly(v, alphanum) {
@@ -319,9 +494,9 @@ func (i *BuildIdentifier) Set(v string) error {
 	return nil
 }
 
-func versionDigitsCompliance(version, increment string) error {
-	if increment != "major" && increment != "minor" && increment != "patch" {
-		return fmt.Errorf("increment MUST be one of 'major', 'minor', or 'patch', got: %s", increment)
+func versionDigitsCompliance(version string, increment Increment) error {
+	if increment != Major && increment != Minor && increment != Patch {
+		return fmt.Errorf("increment MUST be one of %s, %s, or %s, got: %s", Major, Minor, Patch, increment)
 	}
 	if len(version) < 1 {
 		return fmt.Errorf("%s MUST NOT be empty, got: %s", increment, version)
@@ -338,10 +513,11 @@ func versionDigitsCompliance(version, increment string) error {
 	return nil
 }
 
-func SplitVersions(stringVersions string) []string {
+// SplitVersions splits a string of versions into a slice of strings
+// separated by commas or spaces
+func SplitVersions(stringVersions string) (versionStringSlice []string) {
 	stringVersions = strings.TrimSpace(stringVersions)
 
-	versionStringSlice := []string{}
 	if strings.Contains(stringVersions, ",") {
 		stringVersions = strings.ReplaceAll(stringVersions, " ", "")
 		versionStringSlice = strings.Split(stringVersions, ",")

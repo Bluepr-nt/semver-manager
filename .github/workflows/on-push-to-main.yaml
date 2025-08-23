@@ -67,21 +67,30 @@ jobs:
       with:
         name: ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }}
 
+    - name: Get Commit Version Increment
+      uses: Bluepr-nt/Commit-Increment@main
+      id: increment
+      with:
+        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$"
+        minor_pattern: "^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$"
+
     - name: Generate new semver compliant version
       id: new_version
-      uses: paulhatch/semantic-version@v4.0.2
-      with:
-        tag_prefix: ""
-        major_pattern: |
-          /^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$/
-        minor_pattern: |
-          /^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$/
-        format: "${major}.${minor}.${patch}-prerelease.${increment}+${{ needs.build.outputs.BUILD_ID }}"
-        short_tags: false
+      run: |
+        # Use current semver-manager to generate the version
+        # Fetch the git tags
+        git fetch --tags
+        # List the git tags in comma speparated format
+        TAGS=$(git tag -l | tr '\n' ',')
+        # Build the smgr binary
+        go build -o smgr ./cmd/smgr/
+        # Generate the new version using smgr
+        NEW_VERSION=$(./src/smgr increment --source-versions $TAGS --level ${{ steps.increment.outputs.increment }})
+        echo "version_tag=$(echo $NEW_VERSION | cut -d '+' -f 1)" >> $GITHUB_OUTPUT
 
     - name: Set release version with pattern <version_tag>+<commits_increment>-<build_number>
       id: release_version
-      run: echo "RELEASE_VERSION=${{ steps.new_version.outputs.version_tag }}+${{ steps.new_version.outputs.increment }}-${{ needs.build.outputs.BUILD_ID }}" >> $GITHUB_OUTPUT
+      run: echo "RELEASE_VERSION=${{ steps.new_version.outputs.version_tag }}+${{ steps.increment.outputs.increment }}-${{ needs.build.outputs.BUILD_ID }}" >> $GITHUB_OUTPUT
 
     - name: Tag artifact file
       run: mv ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }} ${{ env.ARTIFACT_NAME }}-${{ steps.release_version.outputs.RELEASE_VERSION }}

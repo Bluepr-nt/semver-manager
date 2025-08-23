@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	}
 
 	exitVal := m.Run()
-	
+
 	err = os.Remove("./smgr")
 	if err != nil {
 		os.Exit(1)
@@ -64,12 +64,52 @@ func TestFilterCommand(t *testing.T) {
 			outStr := string(out)
 
 			if tt.expectedErr != "" {
-				require.Error(t, err)
-				require.Contains(t, outStr, tt.expectedErr)
+				assert.Error(t, err)
+				assert.Contains(t, outStr, tt.expectedErr)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.expectedOut, outStr)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedOut, outStr)
 			}
 		})
 	}
+}
+
+func TestFetchCommand(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		expectedOut string
+		expectedErr string
+	}{
+		{
+			name:        "Fetch specific version",
+			args:        []string{"fetch", "-o", "bluepr-nt", "-r", "semver-manager", "-t", GetGithubToken()},
+			expectedOut: "0.1.0 0.1.1 0.1.2 0.1.3 0.1.4\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("./smgr", tt.args...)
+
+			out, err := cmd.CombinedOutput()
+			outStr := string(out)
+
+			if tt.expectedErr != "" {
+				assert.Error(t, err)
+				assert.Contains(t, outStr, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedOut, outStr)
+			}
+		})
+	}
+}
+
+func GetGithubToken() string {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		panic("Please set the GITHUB_TOKEN environment variable to run the tests.")
+	}
+	return token
 }

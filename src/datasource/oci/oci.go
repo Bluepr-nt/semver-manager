@@ -2,14 +2,14 @@ package oci
 
 import (
 	"src/cmd/smgr/models"
-	"src/cmd/smgr/util"
+	"src/cmd/smgr/utils"
 )
 
 type OciCLient struct {
-	config *util.DatasourceConfig
+	config *utils.DatasourceConfig
 }
 
-func NewFetcher(config *util.DatasourceConfig) *OciCLient {
+func NewFetcher(config *utils.DatasourceConfig) *OciCLient {
 	return &OciCLient{config: config}
 }
 
