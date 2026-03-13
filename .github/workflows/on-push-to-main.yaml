@@ -73,11 +73,18 @@ jobs:
           echo "$key=$value" >> $GITHUB_ENV
         done < .github/workflows/regex-patterns.env
     - name: Get Commit Version Increment
-      uses: Bluepr-nt/Commit-Increment@main
       id: increment
-      with:
-        major_pattern: ${{ env.MAJOR_PATTERN }}
-        minor_pattern: ${{ env.MINOR_PATTERN }}
+      run: |
+        # Determine version increment based on commit message
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        if echo "$COMMIT_MSG" | grep -EqE '^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: |\nBREAKING CHANGES: )'; then
+          INCREMENT="major"
+        elif echo "$COMMIT_MSG" | grep -EqE '^feat(\([a-z 0-9,.\-]+\))?!?: '; then
+          INCREMENT="minor"
+        else
+          INCREMENT="patch"
+        fi
+        echo "increment=$INCREMENT" >> $GITHUB_OUTPUT
 
     - name: Generate new semver compliant version
       id: new_version
