@@ -69,8 +69,9 @@ jobs:
 
     - name: Load regex patterns from env file
       run: |
-        echo "MAJOR_PATTERN=^((build|ci|docs|feat|fix|perf|refactor|test)(\\([a-z 0-9,.-]+\\))?!: [\\w \\(\\),:.;\\-#&']+|\\nBREAKING CHANGES: [\\w \\(\\),:.;\\-#&']+)\$" >> $GITHUB_ENV
-        echo "MINOR_PATTERN=^(feat)(\\([a-z 0-9,.-]+\\))?!?: [\\w \\(\\),:.;\\-#&']+$" >> $GITHUB_ENV
+        while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_ENV
+        done < .github/workflows/regex-patterns.env
     - name: Get Commit Version Increment
       uses: Bluepr-nt/Commit-Increment@main
       id: increment
