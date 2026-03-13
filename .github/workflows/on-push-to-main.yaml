@@ -67,12 +67,17 @@ jobs:
       with:
         name: ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }}
 
+    - name: Load regex patterns from env file
+      run: |
+        while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_ENV
+        done < .github/workflows/regex-patterns.env
     - name: Get Commit Version Increment
       uses: Bluepr-nt/Commit-Increment@main
       id: increment
       with:
-        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$"
-        minor_pattern: "^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$"
+        major_pattern: ${{ env.MAJOR_PATTERN }}
+        minor_pattern: ${{ env.MINOR_PATTERN }}
 
     - name: Generate new semver compliant version
       id: new_version
