@@ -18,6 +18,8 @@ jobs:
       - name: Add integration test config
         run: |
           echo -e "OWNER: 13013SwagR\nREPO: semver-manager-test\nTOKEN: ${{ secrets.GITHUB_TOKEN }}" > src/cmd/fetch/fetch_test.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run Tests
         run: |
           cd src; go test ./... -cover
