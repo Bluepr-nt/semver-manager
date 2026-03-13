@@ -182,6 +182,10 @@ Initialize a new project with a default version file:
 smgr fetch -r semver-manager -o 13013SwagR -t <github_token>
 ```
 
+### CI/CD Integration
+
+Semver-Manager can be integrated into your CI/CD pipeline to automate version management.
+
 ## Configuration
 
 Semver-Manager looks for a file in the current directory named `ccs.yaml`
