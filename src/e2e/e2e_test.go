@@ -75,6 +75,12 @@ func TestFilterCommand(t *testing.T) {
 }
 
 func TestFetchCommand(t *testing.T) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		t.Skip("Skipping TestFetchCommand: GITHUB_TOKEN environment variable not set")
+		return
+	}
+
 	tests := []struct {
 		name        string
 		args        []string
@@ -83,7 +89,7 @@ func TestFetchCommand(t *testing.T) {
 	}{
 		{
 			name:        "Fetch specific version",
-			args:        []string{"fetch", "-o", "bluepr-nt", "-r", "semver-manager", "-t", GetGithubToken()},
+			args:        []string{"fetch", "-o", "Bluepr-nt", "-r", "semver-manager", "-t", token},
 			expectedOut: "0.1.0 0.1.1 0.1.2 0.1.3 0.1.4\n",
 		},
 	}
@@ -104,12 +110,4 @@ func TestFetchCommand(t *testing.T) {
 			}
 		})
 	}
-}
-
-func GetGithubToken() string {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		panic("Please set the GITHUB_TOKEN environment variable to run the tests.")
-	}
-	return token
 }
