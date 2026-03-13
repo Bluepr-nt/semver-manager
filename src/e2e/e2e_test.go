@@ -83,7 +83,7 @@ func TestFetchCommand(t *testing.T) {
 	}{
 		{
 			name:        "Fetch specific version",
-			args:        []string{"fetch", "-o", "bluepr-nt", "-r", "semver-manager", "-t", GetGithubToken()},
+			args:        []string{"fetch", "-o", "Bluepr-nt", "-r", "semver-manager", "-t", GetGithubToken()},
 			expectedOut: "0.1.0 0.1.1 0.1.2 0.1.3 0.1.4\n",
 		},
 	}
