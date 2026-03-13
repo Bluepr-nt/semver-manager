@@ -209,3 +209,4 @@ Contributions to Semver-Manager are welcomed and appreciated! Please read the [C
 
 Semver-Manager is released under the [MIT License](LICENSE).
 # Test
+# Test 2
