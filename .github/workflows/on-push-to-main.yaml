@@ -41,7 +41,7 @@ jobs:
         run: ls -al 
       - name: Upload a Build Artifact
         if: ${{ !env.ACT }}
-        uses: actions/upload-artifact@v2.3.0
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }}
           path: ${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_ID }}
@@ -63,7 +63,7 @@ jobs:
         fetch-depth: 0
 
     - name: Download artifact ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }}
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }}
 
