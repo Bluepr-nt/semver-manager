@@ -71,8 +71,10 @@ jobs:
       uses: Bluepr-nt/Commit-Increment@main
       id: increment
       with:
-        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$"
-        minor_pattern: "^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$"
+        major_pattern: |
+          ^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$
+        minor_pattern: |
+          ^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$
 
     - name: Generate new semver compliant version
       id: new_version
