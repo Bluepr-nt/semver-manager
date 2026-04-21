@@ -89,7 +89,7 @@ jobs:
         # Build the smgr binary
         cd src && go build -o ../smgr ./cmd/smgr/ && cd ..
         # Generate the new version using smgr
-        NEW_VERSION=$(./smgr increment --source-versions $TAGS --level ${{ steps.increment.outputs.increment }})
+        NEW_VERSION=$(./smgr increment --source-versions $TAGS --level ${{ steps.increment.outputs.increment_level }})
         echo "version_tag=$(echo $NEW_VERSION | cut -d '+' -f 1)" >> $GITHUB_OUTPUT
 
     - name: Set release version with pattern <version_tag>+<commits_increment>-<build_number>
