@@ -1,205 +1,161 @@
 # Semver-Manager
 
-Semver-Manager is a command-line interface (CLI) tool that streamlines semantic versioning management for developers and seamlessly integrates with popular Git repositories or registry platforms. With Semver-Manager, you can rapidly generate new versions, maintain your version history, and ensure compliance with the Semantic Versioning 2.0.0 specification, all while effortlessly working alongside your preferred platform.
+[![Build](https://github.com/bluepr-nt/semver-manager/actions/workflows/on-push-to-main.yaml/badge.svg)](https://github.com/bluepr-nt/semver-manager/actions/workflows/on-push-to-main.yaml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.23-00ADD8.svg)](https://golang.org/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bluepr-nt/semver-manager)](https://goreportcard.com/report/github.com/bluepr-nt/semver-manager)
 
-## Features
+A CLI tool for managing [Semantic Versioning 2.0.0](https://semver.org) compliant versions — increment, filter, and fetch version tags from GitHub repositories.
 
 ## Table of Contents
 
-- [Features](#features)
+- [Quick Start](#quick-start)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
+- [Commands](#commands)
+  - [increment](#increment)
+  - [filter](#filter)
+  - [fetch](#fetch)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Features
-
-### Implemented
-
-#### Increment Command
-
-- **Purpose**: Increments version numbers (MAJOR.MINOR.PATCH) with optional pre-release support
-- **Default**: Creates 0.0.1 if no version exists
-- **Target Stream**: Creates new version on specified stream, considers all matching releases
-- **Pre-release**: Supports pre-release patterns (e.g., 1.0.0-alpha, 1.0.0-beta)
-
-Usage:
+## Quick Start
 
 ```bash
-# Basic increment
-smgr increment --level [major|minor|patch]
+# Increment a patch version from nothing (defaults to 0.0.1)
+smgr increment --level patch
+# → 0.0.1
 
-# Target stream with pre-release
-smgr increment --target-stream "1.2.*-alpha"
+# Increment major from existing versions
+smgr increment --level major --source-versions "0.0.0,1.0.0,0.1.0"
+# → 2.0.0
 
-# From specific versions
-smgr increment --source-versions "0.0.0,1.0.0-beta,1.1.0"
+# Filter versions by stream and pick the highest
+smgr filter --versions "1.0.0 2.0.0 1.1.0" --stream "1.*.*" --highest
+# → 1.1.0
+
+# Fetch tags from a GitHub repository
+smgr fetch -o bluepr-nt -r semver-manager -t "$GITHUB_TOKEN"
 ```
-
-#### Fetch
-
-The fetch command allows to fetch semantic versions from multiple platforms and filter them
-The fetch command is automatically chained with the filter command  
- Platforms:
-
-- Github
-
-#### Filter
-
-- Highest: returns the highest semver found, is always run after all other filters
-- Stream: returns all version matching the requested identifiers and accepts any identifiers when a '\*' wildcard is specified. The absence of an identifier or wildcard equals a no match, excepts for build metadata which is always a match when not specified in the stream filter pattern. e.g. 1.1.1 won't match _._.\*-alpha
-  Examples:
-  - Pattern: 1.\*.\*
-    Versions: 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha
-    Result: 1.1.1, 1.1.1+build01
-  - Pattern: \*.\*.\*+AMD
-    Versions: 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD
-    Result: 1.1.1+AMD
-  - Pattern: 1.0.0-Beta.\*
-    Versions: 1.0.0-Alpha.0, 1.0.0-Beta.0, 1.0.0-Beta.1
-    Result: 1.0.0-Beta.0, 1.0.0-Beta.1
-  - Pattern: 1.0.0-Beta
-    Versions: 0.1.0-Alpha, 0.1.0-Beta, 1.0.0-Beta
-    Result: 1.0.0-Beta
-  - Pattern: 1.0.0-Beta.\*
-    Versions: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
-    Result: 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha
-  - Pattern: 1.0.0-\*.Beta.\*
-    Versions: 1.0.0-0.Alpha.0, 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
-    Result: 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1
-
-### To do
-
-#### Fetch
-
-- Implement additional platforms: gitlab, local git repository, oci repository, ghrc.io, npm, text file
-- Add logs on long fetch
-
-#### Namespacing
-
-- On fetch, increment, filter, maybe all commands?
-
-#### Increment
-
-- Add input source versions from fetch command
-- Add automated git context to build metadata
-
-#### Filter
-
-- range
-
-#### Push
-
-- create tag <tag> on `<destination> `
-
-#### Print
-
-- create version object and return json or yaml
-
-#### Validate
-
-- Validate semantic versioning
-
-#### CI interface
-
-- Easy integration with CI/CD pipelines (github action)
-
-#### CMD interface
-
-#### Backend server with database and api
-
-- Manage your project's version history
 
 ## Installation
 
-To install Semver-Manager, you can download the binary for your platform from the [Releases](https://github.com/13013SwagR/semver-manager/releases) page or build it from source.
-
 ### Precompiled Binaries (Linux only)
 
-1. Download the appropriate binary for your platform from the [Releases](https://github.com/13013SwagR/semver-manager/releases) page.
-2. Extract the archive and move the `semver-manager` binary to a directory in your system's `PATH`.
+1. Download the binary from the [Releases](https://github.com/bluepr-nt/semver-manager/releases) page.
+2. Move the `smgr` binary to a directory in your `PATH`.
 
 ### Building from Source
 
-Prerequisites:
+Prerequisites: [Go](https://golang.org/dl/) 1.23+
 
-- [Go](https://golang.org/dl/) 1.23+ installed and configured
-
-Run:
-`cd src/ && go build -o smgr ./cmd/smgr/`
-
-Or with no prerequisite:
-`devbox run build`
-
-### Install from Github Binary
-
-```sh
-go install github.com/13013SwagR/semver-manager/smgr@<git_ref>
+```bash
+cd src/ && go build -o smgr ./cmd/smgr/
 ```
 
-## Usage
+Or with [Devbox](https://www.jetify.com/devbox) (no Go prerequisite):
 
-```
-Manage Semantic Versioning compliant versions and integrate with popular repository and registry platform to facilitate the task.
-
-Usage:
-  smgr [flags]
-  smgr [command]
-
-Available Commands:
-  completion  Generate the autocompletion script for the specified shell
-  fetch       Fetch semver tags from a repository.
-  filter      Filter is a CLI tool for filtering versions
-  help        Help about any command
-  increment   Increment a version
-
-Flags:
-      --add_dir_header                   If true, adds the file directory to the header of the log messages
-      --alsologtostderr                  log to standard error as well as files (no effect when -logtostderr=true)
-      --dry-run                          Execute the command in dry-run mode
-  -h, --help                             help for smgr
-      --log_backtrace_at traceLocation   when logging hits line file:N, emit a stack trace (default :0)
-      --log_dir string                   If non-empty, write log files in this directory (no effect when -logtostderr=true)
-      --log_file string                  If non-empty, use this log file (no effect when -logtostderr=true)
-      --log_file_max_size uint           Defines the maximum size a log file can grow to (no effect when -logtostderr=true). Unit is megabytes. If the value is 0, the maximum file size is unlimited. (default 1800)
-      --logtostderr                      log to standard error instead of files
-      --one_output                       If true, only write logs to their native severity level (vs also writing to each lower severity level; no effect when -logtostderr=true)
-      --skip_headers                     If true, avoid header prefixes in the log messages
-      --skip_log_headers                 If true, avoid headers when opening log files (no effect when -logtostderr=true)
-      --stderrthreshold severity         logs at or above this threshold go to stderr when writing to files and stderr (no effect when -logtostderr=true or -alsologtostderr=false) (default 2)
-  -v, --v Level                          number for the log level verbosity
-      --vmodule moduleSpec               comma-separated list of pattern=N settings for file-filtered logging
-
-Use "smgr [command] --help" for more information about a command.
+```bash
+devbox run build
 ```
 
-## Examples
+## Commands
 
-Initialize a new project with a default version file:
+All commands support a `--dry-run` flag and standard logging flags (`-v` for verbosity).
 
-```sh
-smgr fetch -r semver-manager -o 13013SwagR -t <github_token>
+### increment
+
+Increment a version number (MAJOR.MINOR.PATCH) with optional pre-release support. Defaults to `0.0.1` if no source versions are provided.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--level` | `-l` | `patch` | Increment level: `major`, `minor`, `patch` (defaults to `patch` if `--target-stream` not specified) |
+| `--target-stream` | `-t` | | Target stream pattern, e.g. `1.2.*` or `*.*.*-alpha.*` |
+| `--source-versions` | `-s` | | Comma-separated source versions, e.g. `"0.0.0,1.0.0,1.1.0"` |
+
+**Examples:**
+
+```bash
+# Default patch increment (no source → 0.0.1)
+smgr increment
+
+# Major increment from existing versions
+smgr increment --level major --source-versions "0.0.0,1.0.0,0.1.0"
+# → 2.0.0
+
+# Pre-release increment targeting an alpha stream
+smgr increment --level minor --source-versions "0.0.0,1.0.0,0.1.0" --target-stream "*.*.*-alpha.*"
+# → 1.1.0-alpha.0
 ```
 
-## Configuration
+### filter
 
-Semver-Manager looks for a file in the current directory named `ccs.yaml`
+Filter a list of versions using stream patterns and/or select the highest match.
 
-All flags are available as configuration entries, for example:
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--versions` | `-V` | | Space-separated version list to filter |
+| `--stream` | `-s` | | Stream pattern using `*` wildcards for any identifier |
+| `--highest` | `-H` | `false` | Return only the highest version after filtering |
 
+**Examples:**
+
+```bash
+# Filter by stream
+smgr filter --versions "1.0.0 2.0.0 1.1.0" --stream "1.*.*"
+# → 1.0.0 1.1.0
+
+# Highest across all versions
+smgr filter --versions "1.0.0 2.0.0 1.1.0" --highest
+# → 2.0.0
+
+# Combined: highest in a stream
+smgr filter --versions "1.0.0 2.0.0 1.1.0" --stream "1.*.*" --highest
+# → 1.1.0
 ```
-TOKEN: <github_token>
-REPO: semver-manager
-OWNER: SMARTeacher
-```
 
-All flags are also available environment variables with the `CCS_` prefix, for example:  
-`TOKEN=<github_token>` `REPO=semver-manager` `OWNER=SMARTeacher`
+<details>
+<summary>Stream pattern reference</summary>
+
+Stream patterns use `*` as a wildcard for any identifier. The absence of an identifier (or wildcard) means "no match", except for build metadata which matches anything when not specified.
+
+| Pattern | Input versions | Result |
+|---------|---------------|--------|
+| `1.*.*` | 1.1.1, 2.1.1, 1.1.1+build01, 1.1.1-alpha | 1.1.1, 1.1.1+build01 |
+| `*.*.*+AMD` | 1.1.1+AMD, 1.1.2, 1.1.1-alpha+AMD | 1.1.1+AMD |
+| `1.0.0-Beta.*` | 1.0.0-Alpha.0, 1.0.0-Beta.0, 1.0.0-Beta.1 | 1.0.0-Beta.0, 1.0.0-Beta.1 |
+| `1.0.0-Beta` | 0.1.0-Alpha, 0.1.0-Beta, 1.0.0-Beta | 1.0.0-Beta |
+| `1.0.0-Beta.*` | 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha | 1.0.0-Beta.Alpha.0, 1.0.0-Beta, 1.0.0-Beta.Alpha |
+| `1.0.0-*.Beta.*` | 1.0.0-0.Alpha.0, 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1 | 1.0.0-Beta.0, 1.0.0-Alpha.Beta.1 |
+
+</details>
+
+### fetch
+
+Fetch semantic version tags from a GitHub repository. Automatically chains with all `filter` flags.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--owner` | `-o` | | Repository owner or organization |
+| `--repo` | `-r` | | Repository name |
+| `--token` | `-t` | | GitHub access token |
+| `--platform` | `-p` | `github` | Platform to fetch from (currently: `github`) |
+| `--stream` | `-s` | | *(from filter)* Stream pattern |
+| `--highest` | `-H` | `false` | *(from filter)* Return only the highest version |
+| `--versions` | `-V` | | *(from filter)* Additional versions to merge with fetched results |
+
+**Examples:**
+
+```bash
+# Fetch all semver tags from a repo
+smgr fetch -o bluepr-nt -r semver-manager -t "$GITHUB_TOKEN"
+
+# Fetch and filter to highest in a stream
+smgr fetch -o bluepr-nt -r semver-manager -t "$GITHUB_TOKEN" --stream "1.*.*" --highest
+```
 
 ## Contributing
 
-Contributions to Semver-Manager are welcomed and appreciated! Please read the [Contributing Guidelines](CONTRIBUTING.md) to get started. By participating in this project, you agree to abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions are welcomed! Please read the [Contributing Guidelines](CONTRIBUTING.md) to get started. By participating in this project, you agree to abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
