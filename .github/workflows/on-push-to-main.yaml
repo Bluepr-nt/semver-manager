@@ -18,6 +18,8 @@ jobs:
         run: |
           echo -e "OWNER: 13013SwagR\nREPO: semver-manager-test\nTOKEN: ${{ secrets.GITHUB_TOKEN }}" > src/cmd/fetch/fetch_test.yaml
       - run: cd src; go test ./... -cover
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build:
     runs-on: ubuntu-latest
     outputs:
