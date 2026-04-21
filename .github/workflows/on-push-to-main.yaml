@@ -94,7 +94,7 @@ jobs:
 
     - name: Set release version with pattern <version_tag>+<commits_increment>-<build_number>
       id: release_version
-      run: echo "RELEASE_VERSION=${{ steps.new_version.outputs.version_tag }}+${{ steps.increment.outputs.increment }}-${{ needs.build.outputs.BUILD_ID }}" >> $GITHUB_OUTPUT
+      run: echo "RELEASE_VERSION=${{ steps.new_version.outputs.version_tag }}+${{ steps.increment.outputs.increment_level }}-${{ needs.build.outputs.BUILD_ID }}" >> $GITHUB_OUTPUT
 
     - name: Tag artifact file
       run: mv ${{ env.ARTIFACT_NAME }}-${{ needs.build.outputs.BUILD_ID }} ${{ env.ARTIFACT_NAME }}-${{ steps.release_version.outputs.RELEASE_VERSION }}
