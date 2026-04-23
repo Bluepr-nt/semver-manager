@@ -35,6 +35,7 @@ func NewRootCommand(output io.Writer) *cobra.Command {
 		},
 	}
 
+	cmd.SetOut(output)
 	cmd.PersistentFlags().BoolVar(&config.dryRun, "dry-run", false, "Execute the command in dry-run mode")
 	cmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
 	filterArgs := &filter.FilterArgs{}
