@@ -53,7 +53,7 @@ func main() {
 	flag.Set("logtostderr", "false")
 	flag.Set("alsologtostderr", "false")
 	flag.Parse()
-	rootCmd := NewRootCommand(nil)
+	rootCmd := NewRootCommand(os.Stdout)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
