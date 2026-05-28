@@ -1,0 +1,15 @@
+environments:
+  - name: docker:go:1.26
+    type: docker
+    config:
+      image: golang:1.26
+runners-engine:
+  type: github-actions
+artefacts-storage:
+  type: github-packages
+git-server:
+  type: github
+release-engine:
+  type: semver-manager
+increment-engine:
+  type: commit-increment
