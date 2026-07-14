@@ -13,7 +13,7 @@ tasks:
   needs: [build-cli, tests]
   triggers: [pull_request]
   release:
-    stream: *.*.*-alpha.*
+    stream: '*.*.*-alpha.*'
     type: conventional-commits
 
 - name: release
@@ -21,11 +21,11 @@ tasks:
   needs: [build-cli, tests]
   triggers: [push:main]
   release:
-    stream: *.*.*
+    stream: '*.*.*'
     type: conventional-commits
 
 - name: tests
   type: test
   test:
-    environment: docker:golang:1.26
+    environment: docker:go:1.26
     command: cd src && go test ./... -cover

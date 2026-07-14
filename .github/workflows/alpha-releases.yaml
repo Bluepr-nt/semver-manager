@@ -35,7 +35,7 @@ jobs:
     - name: Generate new version
       run: |
         EXISTING_VERSIONS=$(./smgr fetch --repo ${{ github.event.repository.name }} --owner ${{ github.repository_owner }} --token ${{ secrets.GITHUB_TOKEN }})
-        NEW_VERSION=$(./smgr increment -l ${{ steps.commit_increment.outputs.increment_level }} --source-versions "$EXISTING_VERSIONS" --target-stream alpha)
+        NEW_VERSION=$(./smgr increment -l ${{ steps.commit_increment.outputs.increment_level }} --source-versions "$EXISTING_VERSIONS" --target-stream *.*.*-alpha.*)
         echo "Generated new version: $NEW_VERSION"
         echo "VERSION_TAG=$NEW_VERSION" >> $GITHUB_OUTPUT
       id: new_version
@@ -59,7 +59,7 @@ jobs:
         git config --global user.name ${{ github.actor }} && git config --global user.email dansereauvincent@gmail.com && \
         TARGET_SHA="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" && \
         git fetch origin $TARGET_SHA && git checkout --detach $TARGET_SHA && \
-        git tag -a ${{ steps.new_version.outputs.VERSION_TAG }} -m "Release ${{ steps.new_version.outputs.VERSION_TAG }} on stream alpha" && echo "Git tag list" && git tag -l && git push --tags
+        git tag -a ${{ steps.new_version.outputs.VERSION_TAG }} -m "Release ${{ steps.new_version.outputs.VERSION_TAG }} on stream *.*.*-alpha.*" && echo "Git tag list" && git tag -l && git push --tags
   build-cli:
     name: build-cli
     runs-on: ubuntu-latest
@@ -90,7 +90,7 @@ jobs:
   tests:
     name: tests
     runs-on: ubuntu-latest
-    container: docker:golang:1.26
+    container: golang:1.26
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
