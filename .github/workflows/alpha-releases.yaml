@@ -9,6 +9,7 @@ jobs:
     name: alpha-releases
     needs:
     - build-cli
+    - tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -86,5 +87,17 @@ jobs:
         retention-days: "5"
     outputs:
       BUILD_NUMBER: ${{ steps.build_number.outputs.BUILD_NUMBER }}
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    container: docker:golang:1.26
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        path: ""
+        repository: ${{ github.repository }}
+    - name: Execute test commands for tests
+      run: cd src && go test ./... -cover
 env:
   ARTIFACT_NAME: semver-manager

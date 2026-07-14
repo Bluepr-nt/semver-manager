@@ -2,24 +2,30 @@ product_data:
   name: semver-manager
 
 tasks:
-- name: build-cli # for all workflows
+- name: build-cli 
   type: build
   build:
     environment: docker:go:1.26
     command: cd src && go build -o ../smgr ./cmd/smgr
 
-- name: alpha-releases # for pr workflows
+- name: alpha-releases
   type: release
-  needs: [build-cli]
+  needs: [build-cli, tests]
   triggers: [pull_request]
   release:
-    stream: alpha
+    stream: *.*.*-alpha.*
     type: conventional-commits
 
-- name: release # for trunk workflows
+- name: release
   type: release
-  needs: [build-cli]
+  needs: [build-cli, tests]
   triggers: [push:main]
   release:
-    stream: release
+    stream: *.*.*
     type: conventional-commits
+
+- name: tests
+  type: test
+  test:
+    environment: docker:golang:1.26
+    command: cd src && go test ./... -cover
