@@ -37,6 +37,20 @@ This document tracks planned work for Semver-Manager, organized by command/area.
 - [ ] Accept piped input from `fetch` command
 - [ ] Automated git context for build metadata
 
+### Target Streams
+
+- [ ] Support target stream aliases e.g. release for `*.*.*`, unmapped names for pre-release streams e.g. `alpha`, `beta`, `rc` to `*.*.*-alpha`, `*.*.*-beta`, `*.*.*-rc`
+
+### Bugs
+- [ ] Fix the following bugs
+```bash
+smgr increment -l patch --source-versions "0.0.1-alpha 0.0.2-alpha.0" --target-stream "*.*.*-alpha"
+0.0.2-alpha.0 # should return 0.0.2-alpha.1
+smgr increment -l patch --source-versions "0.0.1-alpha" --target-stream "*.*.*-alpha"
+0.0.2-alpha.0 # should return 0.0.1-alpha.0
+smgr increment -l patch --source-versions "" --target-stream "*.*.*-alpha"
+0.0.1-alpha # should return 0.0.0-alpha or 0.0.0-alpha.0
+```
 ---
 
 ## push
