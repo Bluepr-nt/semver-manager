@@ -71,7 +71,7 @@ jobs:
     - name: Checkout code for build-cli
       uses: actions/checkout@v6
     - name: Execute build commands for build-cli
-      run: cd src && go build -o semver-manager ./cmd/semver-manager
+      run: cd src && go build -o ../smgr ./cmd/smgr
     - name: Generate build number
       run: |
         BUILD_NUMBER=$(echo ${GITHUB_SHA} | cut -c1-7)-$(date '+%Y%m%dT%H%M%S')-$GITHUB_RUN_NUMBER

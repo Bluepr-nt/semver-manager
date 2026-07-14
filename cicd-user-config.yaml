@@ -6,7 +6,7 @@ tasks:
   type: build
   build:
     environment: docker:go:1.26
-    command: cd src && go build -o semver-manager ./cmd/semver-manager
+    command: cd src && go build -o ../smgr ./cmd/smgr
 
 - name: alpha-releases # for pr workflows
   type: release
