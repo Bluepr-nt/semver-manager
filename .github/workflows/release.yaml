@@ -1,0 +1,90 @@
+name: release
+on:
+  push:
+    branches:
+    - main
+    - master
+jobs:
+  build-cli:
+    name: build-cli
+    runs-on: ubuntu-latest
+    container: golang:1.26
+    steps:
+    - name: Setup Git environment
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+    - name: Set up Go 1.26 environment
+      run: go version
+    - name: Checkout code for build-cli
+      uses: actions/checkout@v6
+    - name: Execute build commands for build-cli
+      run: go build -o semver-manager ./cmd/semver-manager
+    - name: Generate build number
+      run: |
+        BUILD_NUMBER=$(echo ${GITHUB_SHA} | cut -c1-7)-$(date '+%Y%m%dT%H%M%S')-$GITHUB_RUN_NUMBER
+        echo "Generated build number: $BUILD_NUMBER"
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+      id: build_number
+    - name: Upload build artefacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ env.ARTIFACT_NAME }}-${{ steps.build_number.outputs.BUILD_NUMBER }}
+        path: build-artefacts/
+        retention-days: "5"
+    outputs:
+      BUILD_NUMBER: ${{ steps.build_number.outputs.BUILD_NUMBER }}
+  release:
+    name: release
+    needs:
+    - build-cli
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        path: ""
+        repository: ${{ github.repository }}
+    - name: Get Commit Version Increment
+      id: commit_increment
+      uses: Bluepr-nt/Commit-Increment@main
+      with:
+        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\\([a-z 0-9,.\\-]+\\))?!: [\\w \\(\\),:.;\\-#&']+|\\nBREAKING CHANGES: [\\w \\(\\),:.;\\-#&']+)$"
+        minor_pattern: "^(feat)(\\([a-z 0-9,.\\-]+\\))?!?: [\\w \\(\\),:.;\\-#&']+$"
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        path: Semver-manager
+        repository: Bluepr-nt/Semver-manager
+    - name: Build semver-manager
+      run: cd Semver-manager/src && go build -o ../../smgr ./cmd/smgr/ && cd ../..
+    - name: Generate new version
+      run: |
+        EXISTING_VERSIONS=$(./smgr fetch --repo ${{ github.event.repository.name }} --owner ${{ github.repository_owner }} --token ${{ secrets.GITHUB_TOKEN }})
+        NEW_VERSION=$(./smgr increment -l ${{ steps.commit_increment.outputs.increment_level }} --source-versions "$EXISTING_VERSIONS" --target-stream release)
+        echo "Generated new version: $NEW_VERSION"
+        echo "VERSION_TAG=$NEW_VERSION" >> $GITHUB_OUTPUT
+      id: new_version
+    - name: Set release version with pattern <version_tag>+<commits_increment>-<build_number>
+      run: |-
+        RELEASE_VERSION=${{ steps.new_version.outputs.VERSION_TAG }}+${{ steps.commit_increment.outputs.increment_level }}-${{ needs.build-cli.outputs.BUILD_NUMBER }}
+        echo "Generated release version: $RELEASE_VERSION"
+        echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+      id: release_version
+    - name: Download artifact ${{ env.ARTIFACT_NAME }}-${{ needs.build-cli.outputs.BUILD_NUMBER }}
+      id: download_artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ env.ARTIFACT_NAME }}-${{ needs.build-cli.outputs.BUILD_NUMBER }}
+    - name: Tag artifact with release version
+      run: |-
+        mv ${{ steps.download_artifact.outputs.download-path }}/${{ env.ARTIFACT_NAME }} ${{ steps.download_artifact.outputs.download-path }}/${{ env.ARTIFACT_NAME }}-${{ steps.release_version.outputs.RELEASE_VERSION }}
+        ls -al ${{ steps.download_artifact.outputs.download-path }}/
+    - name: Create Git Tag
+      run: |-
+        git config --global user.name ${{ github.actor }} && git config --global user.email dansereauvincent@gmail.com && \
+        TARGET_SHA="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" && \
+        git fetch origin $TARGET_SHA && git checkout --detach $TARGET_SHA && \
+        git tag -a ${{ steps.new_version.outputs.VERSION_TAG }} -m "Release ${{ steps.new_version.outputs.VERSION_TAG }} on stream release" && echo "Git tag list" && git tag -l && git push --tags
+env:
+  ARTIFACT_NAME: semver-manager
