@@ -28,4 +28,4 @@ tasks:
   type: test
   test:
     environment: docker:go:1.26:test
-    command: cd src && go test  $(go list ./... | grep -v '/cmd/smgr/e2e$') -cover && go test ./cmd/smgr/e2e
+    command: cd src && go test ./... -cover
