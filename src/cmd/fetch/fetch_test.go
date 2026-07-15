@@ -2,10 +2,10 @@ package fetch
 
 import (
 	"bytes"
-	"src/cmd/smgr/cmd/filter"
-
 	"os"
 	"testing"
+
+	"src/cmd/smgr/cmd/filter"
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"

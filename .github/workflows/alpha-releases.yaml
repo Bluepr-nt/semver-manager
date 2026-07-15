@@ -92,6 +92,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OWNER: ${{ secrets.OWNER }}
+      REPO: ${{ secrets.REPO }}
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container: golang:1.26
     steps:
     - name: Checkout code

@@ -13,6 +13,13 @@ environments:
         github_token:
           name: GITHUB_TOKEN
           value: ${{ secrets.GITHUB_TOKEN }}
+      env_vars:
+        OWNER: 
+          value: ${{ secrets.OWNER }}
+        REPO:
+          value: ${{ secrets.REPO }}
+        TOKEN:
+          value: ${{ secrets.GITHUB_TOKEN }}
       
 runners-engine:
   type: github-actions
