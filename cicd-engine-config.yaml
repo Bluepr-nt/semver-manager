@@ -15,9 +15,9 @@ environments:
           value: ${{ secrets.GITHUB_TOKEN }}
       env_vars:
         OWNER: 
-          value: ${{ secrets.OWNER }}
+          value: "bluepr-nt"
         REPO:
-          value: ${{ secrets.REPO }}
+          value: "semver-manager-test"
         TOKEN:
           value: ${{ secrets.GITHUB_TOKEN }}
       

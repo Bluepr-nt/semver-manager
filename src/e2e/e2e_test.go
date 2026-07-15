@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -107,9 +108,18 @@ func TestFetchCommand(t *testing.T) {
 }
 
 func GetGithubToken() string {
+	LoadEnvFromFile()
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		panic("Please set the GITHUB_TOKEN environment variable to run the tests.")
 	}
 	return token
+}
+
+func LoadEnvFromFile() error {
+	err := godotenv.Load("fetch_test.yaml")
+	if err != nil {
+		return err
+	}
+	return nil
 }
