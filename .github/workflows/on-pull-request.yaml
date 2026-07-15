@@ -1,8 +1,8 @@
 name: Build & Release
 on:
   pull_request:
-    branches: [main]
-    types: [opened, reopened, synchronize]
+    branches: [disabled]
+    # types: [opened, reopened, synchronize]
 env:
   ARTIFACT_NAME: smgr
 jobs:

@@ -6,7 +6,7 @@ tasks:
   type: build
   build:
     environment: docker:go:1.26
-    command: cd src && go build -o ../smgr ./cmd/smgr
+    command: cd src && go build -o ../build-artefacts/smgr ./cmd/smgr
 
 - name: alpha-releases
   type: release
