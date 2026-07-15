@@ -19,6 +19,9 @@ This document tracks planned work for Semver-Manager, organized by command/area.
 
 - [ ] Add progress logging on long-running fetches
 
+### Bugs
+- [] Flags `-V` and `--version` are not working
+
 ---
 
 ## filter
