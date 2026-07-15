@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func buildBinary() error {
-	cmd := exec.Command("go", "build", "-cover", "-o", "smgr", "../cmd/smgr/")
+	cmd := exec.Command("go", "build", "-o", "smgr", "../cmd/smgr/")
 	err := cmd.Run()
 	return err
 }

@@ -115,6 +115,6 @@ jobs:
         path: ""
         repository: ${{ github.repository }}
     - name: Execute test commands for tests
-      run: cd src && go test ./... -cover
+      run: cd src && go test ./...
 env:
   ARTIFACT_NAME: semver-manager
