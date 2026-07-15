@@ -102,6 +102,8 @@ jobs:
   tests:
     name: tests
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container: golang:1.26
     steps:
     - name: Checkout code

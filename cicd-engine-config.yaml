@@ -1,8 +1,19 @@
 environments:
-  - name: docker:go:1.26
+  docker:go:1.26:
+    aliases: ["build"]
     type: docker
     config:
       image: golang:1.26
+  docker:go:1.26:test:
+    aliases: ["test"]
+    type: docker
+    config:
+      image: golang:1.26
+      secrets:
+        github_token:
+          name: GITHUB_TOKEN
+          value: ${{ secrets.GITHUB_TOKEN }}
+      
 runners-engine:
   type: github-actions
 artefacts-storage:
