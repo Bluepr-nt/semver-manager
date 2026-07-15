@@ -103,6 +103,6 @@ jobs:
         path: ""
         repository: ${{ github.repository }}
     - name: Execute test commands for tests
-      run: cd src && go test ./... -cover
+      run: cd src && go test  $(go list ./... | grep -v '/cmd/smgr/e2e$') -cover && go test ./cmd/smgr/e2e
 env:
   ARTIFACT_NAME: semver-manager
