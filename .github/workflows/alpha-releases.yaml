@@ -102,10 +102,7 @@ jobs:
       with:
         path: ""
         repository: ${{ github.repository }}
-    # - uses: actions/setup-go@v4
-    #   with:
-    #     go-version: '^1.26'
     - name: Execute test commands for tests
-      run: cd src && go test -buildvcs=false ./... -cover
+      run: cd src && go test ./...
 env:
   ARTIFACT_NAME: semver-manager
