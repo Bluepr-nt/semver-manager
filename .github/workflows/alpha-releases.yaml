@@ -48,6 +48,8 @@ jobs:
     - name: Download artifact ${{ env.ARTIFACT_NAME }}-${{ needs.build-cli.outputs.BUILD_NUMBER }}
       id: download_artifact
       uses: actions/download-artifact@v8
+      with:
+        path: downloaded-artefacts
     - name: Tag artifact with release version
       run: |-
         DOWNLOAD_PATH="${{ steps.download_artifact.outputs.download-path }}"
