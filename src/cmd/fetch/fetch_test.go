@@ -2,10 +2,10 @@ package fetch
 
 import (
 	"bytes"
-	"src/cmd/smgr/cmd/filter"
-
 	"os"
 	"testing"
+
+	"src/cmd/smgr/cmd/filter"
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +60,12 @@ func TestNewFetchCommand(t *testing.T) {
 
 func TestNewFetchCommandRealRepo(t *testing.T) {
 	LoadEnvFromFile()
+	owner := os.Getenv("OWNER")
+	repo := os.Getenv("REPO")
+	token := os.Getenv("TOKEN")
+	if owner == "" || repo == "" || token == "" {
+		t.Fatalf("OWNER %s, REPO %s, and TOKEN %s environment variables must be set for this test.", owner, repo, token)
+	}
 	tests := []struct {
 		name         string
 		flags        []testFlag
@@ -68,9 +74,9 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 		{
 			name: "fetch all semver tags",
 			flags: []testFlag{
-				{"owner", os.Getenv("OWNER")},
-				{"repo", os.Getenv("REPO")},
-				{"token", os.Getenv("TOKEN")},
+				{"owner", owner},
+				{"repo", repo},
+				{"token", token},
 				{"platform", "github"},
 				{"highest", "false"},
 			},
@@ -79,9 +85,9 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 		{
 			name: "fetch only the highest semver tag",
 			flags: []testFlag{
-				{"owner", os.Getenv("OWNER")},
-				{"repo", os.Getenv("REPO")},
-				{"token", os.Getenv("TOKEN")},
+				{"owner", owner},
+				{"repo", repo},
+				{"token", token},
 				{"platform", "github"},
 				{"highest", "true"},
 			},
@@ -90,9 +96,9 @@ func TestNewFetchCommandRealRepo(t *testing.T) {
 		{
 			name: "fetch only release semver tags",
 			flags: []testFlag{
-				{"owner", os.Getenv("OWNER")},
-				{"repo", os.Getenv("REPO")},
-				{"token", os.Getenv("TOKEN")},
+				{"owner", owner},
+				{"repo", repo},
+				{"token", token},
 				{"platform", "github"},
 				{"highest", "false"},
 				{"stream", "*.*.*"},

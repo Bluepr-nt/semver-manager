@@ -34,8 +34,7 @@ Increment a version according to the provided:
   - The source, any of: repository, source-stream, source-version, source-versions
   - The target stream, if specified, e.g. 1.2.* (optional)
   `,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		},
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return utils.InitializeConfig(cmd)

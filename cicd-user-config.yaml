@@ -1,0 +1,31 @@
+product_data:
+  name: smgr
+
+tasks:
+- name: build-cli 
+  type: build
+  build:
+    environment: docker:go:1.26
+    command: cd src && go build -o ../build-artefacts/smgr ./cmd/smgr
+
+- name: alpha-releases
+  type: release
+  needs: [build-cli, tests]
+  triggers: [pull_request]
+  release:
+    stream: '*.*.*-alpha.*'
+    type: conventional-commits
+
+- name: release
+  type: release
+  needs: [build-cli, tests]
+  triggers: [push:main]
+  release:
+    stream: '*.*.*'
+    type: conventional-commits
+
+- name: tests
+  type: test
+  test:
+    environment: docker:go:1.26:test
+    command: cd src && go test ./... 

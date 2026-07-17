@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func buildBinary() error {
-	cmd := exec.Command("go", "build", "-o", "smgr", "../cmd/smgr/")
+	cmd := exec.Command("go", "build", "-buildvcs=false", "-o", "smgr", "../cmd/smgr/")
 	err := cmd.Run()
 	return err
 }
@@ -83,8 +84,8 @@ func TestFetchCommand(t *testing.T) {
 	}{
 		{
 			name:        "Fetch specific version",
-			args:        []string{"fetch", "-o", "bluepr-nt", "-r", "semver-manager", "-t", GetGithubToken()},
-			expectedOut: "0.1.0 0.1.1 0.1.2 0.1.3 0.1.4\n",
+			args:        []string{"fetch", "-o", "13013SwagR", "-r", "semver-manager-test", "-t", GetGithubToken(), "--stream", "*.*.*"},
+			expectedOut: "0.0.4 1.0.0 1.0.0+0.build.1-rc.10000aaa-kk-0.1 1.1.2+meta 1.1.2+meta-valid 1.1.7 1.2.3 2.0.0+build.1848 2.0.0 10.20.30\n",
 		},
 	}
 
@@ -107,9 +108,18 @@ func TestFetchCommand(t *testing.T) {
 }
 
 func GetGithubToken() string {
+	LoadEnvFromFile()
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		panic("Please set the GITHUB_TOKEN environment variable to run the tests.")
 	}
 	return token
+}
+
+func LoadEnvFromFile() error {
+	err := godotenv.Load("fetch_test.yaml")
+	if err != nil {
+		return err
+	}
+	return nil
 }
