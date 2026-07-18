@@ -14,7 +14,7 @@ tasks:
   triggers: [pull_request]
   release:
     stream: '*.*.*-alpha.*'
-    type: conventional-commits
+    type: pre-release
 
 - name: release
   type: release
@@ -22,7 +22,7 @@ tasks:
   triggers: [push:main]
   release:
     stream: '*.*.*'
-    type: conventional-commits
+    type: release
 
 - name: tests
   type: test
