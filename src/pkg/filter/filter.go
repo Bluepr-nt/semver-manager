@@ -1,8 +1,9 @@
 package filter
 
 import (
-	"src/cmd/smgr/models"
 	"strconv"
+
+	"src/cmd/smgr/models"
 
 	"github.com/blang/semver/v4"
 )
@@ -54,8 +55,8 @@ func GetHighestStreamVersion(versions []models.Version, streamPattern models.Ver
 	return sourceVersion[0], nil
 }
 
+// GetHighestStreamVersionWithReleases returns the highest version from a list of versions that match a given stream pattern, including matching prerelease and all release versions.
 func GetHighestStreamVersionWithReleases(versions []models.Version, streamPattern models.VersionPattern) (models.Version, error) {
-
 	streamFilter := VersionPatternFilter(streamPattern)
 	sourceVersions, err := ApplyFilters(versions, streamFilter)
 	if err != nil {
@@ -84,9 +85,7 @@ func GetHighestStreamVersionWithReleases(versions []models.Version, streamPatter
 // VersionPatternFilter returns a filter function that
 // filters versions based on a VersionPattern
 func VersionPatternFilter(pattern models.VersionPattern) FilterFunc {
-
 	return func(versions []models.Version) ([]models.Version, error) {
-
 		var filtered []models.Version
 		releaseFilter := ReleasePatternFilter(pattern.Release)
 		prereleaseFilter := PrereleasePatternFilter(pattern.Prerelease)
@@ -132,7 +131,6 @@ func ReleasePatternFilter(pattern models.ReleasePattern) FilterFunc {
 // all release versions are also returned
 func PrereleasePatternFilter(pattern models.PRVersionPattern) FilterFunc {
 	return func(versions []models.Version) ([]models.Version, error) {
-
 		var filtered []models.Version
 
 		for _, version := range versions {
@@ -161,11 +159,18 @@ func GetValidVersions(stringVersionsList ...string) []models.Version {
 }
 
 func matchPrerelease(prIdentifiersPattern []models.PRIdentifierPattern, prerelease models.PRVersion) bool {
-	if len(prIdentifiersPattern) != len(prerelease.Identifiers) {
+	// if len(prIdentifiersPattern) != len(prerelease.Identifiers) && (len(prIdentifiersPattern)+1 != len(prerelease.Identifiers) && len(prIdentifiersPattern) != len(prerelease.Identifiers)+1) {
+	// 	return false
+	// }
+
+	if len(prIdentifiersPattern) == 0 && len(prerelease.Identifiers) > 0 {
 		return false
 	}
 
 	for i, prIdentifierPattern := range prIdentifiersPattern {
+		if i >= len(prerelease.Identifiers) {
+			return false
+		}
 		if prIdentifierPattern.Value() != "*" && prIdentifierPattern.Value() != prerelease.Identifiers[i].Value() {
 			return false
 		}

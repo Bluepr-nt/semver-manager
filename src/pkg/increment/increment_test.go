@@ -1,9 +1,10 @@
 package increment
 
 import (
+	"testing"
+
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/testutils"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -306,7 +307,6 @@ func TestIncrementReleaseFromStream(t *testing.T) {
 }
 
 func TestNumericalPRIncrement(t *testing.T) {
-
 	tests := []struct {
 		name             string
 		sourceIdentifier models.PRIdentifier
@@ -347,7 +347,6 @@ func TestNumericalPRIncrement(t *testing.T) {
 }
 
 func TestAlphabeticalIncrement(t *testing.T) {
-
 	tests := []struct {
 		name             string
 		sourceIdentifier models.PRIdentifier
@@ -406,7 +405,6 @@ func TestAlphabeticalIncrement(t *testing.T) {
 }
 
 func TestPromotePRVersion(t *testing.T) {
-
 	tests := []struct {
 		name          string
 		sourceVersion models.Version
@@ -487,7 +485,7 @@ func TestPromotePRVersion(t *testing.T) {
 			versions: []models.Version{
 				testutils.NewVersion("1.0.0-Beta.Alpha.0"),
 			},
-			want: testutils.NewVersion("1.0.0-Beta.0"),
+			want: testutils.NewVersion("1.0.0-Beta.Alpha.1"),
 		},
 
 		{
@@ -518,7 +516,7 @@ func TestPromotePRVersion(t *testing.T) {
 				testutils.NewVersion("1.0.0-Alpha.Beta.0"),
 				testutils.NewVersion("1.0.0-Teta.Beta.0.0"),
 			},
-			want: testutils.NewVersion("1.0.0-Alpha.Beta.1"),
+			want: testutils.NewVersion("1.0.0-Teta.Beta.0.1"),
 		},
 		{
 			name:          "Promote to loose prerelease stream",
@@ -529,7 +527,7 @@ func TestPromotePRVersion(t *testing.T) {
 				testutils.NewVersion("1.0.0-Beta.0"),
 				testutils.NewVersion("1.0.0-Beta.0.1"),
 			},
-			want: testutils.NewVersion("1.0.0-Beta.1"),
+			want: testutils.NewVersion("1.0.0-Beta.0.2"),
 		},
 		{
 			name:          "Promote to very loose prerelease stream",
@@ -551,6 +549,22 @@ func TestPromotePRVersion(t *testing.T) {
 			},
 			want: testutils.NewVersion("1.0.0-Beta.0.2"),
 		},
+		{
+			name:          "Promote to very loose prerelease stream with no matching versions",
+			sourceVersion: testutils.NewVersion("0.0.1-alpha"),
+			targetStream:  testutils.NewVersionPattern("*.*.*-alpha"),
+			versions:      []models.Version{},
+			want:          testutils.NewVersion("0.0.1-alpha.0"),
+		},
+		{
+			name:         "Promote to very loose prerelease stream with higher matching release version",
+			targetStream: testutils.NewVersionPattern("*.*.*-alpha"),
+			versions: []models.Version{
+				testutils.NewVersion("0.0.1-alpha"),
+				testutils.NewVersion("0.0.2-alpha.0"),
+			},
+			want: testutils.NewVersion("0.0.2-alpha.1"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -568,7 +582,6 @@ func TestPromotePRVersion(t *testing.T) {
 }
 
 func TestIncrementVersion(t *testing.T) {
-
 	tests := []struct {
 		name                   string
 		sourceVersions         []models.Version
@@ -659,6 +672,16 @@ func TestIncrementVersion(t *testing.T) {
 			streamPattern:          testutils.NewVersionPattern("1.0.*-alpha.*"),
 			increment:              models.None,
 			wantIncrementedVersion: testutils.NewVersion("1.0.0-alpha.0"),
+			wantErr:                false,
+		},
+		{
+			name: "Increment with PreRelease stream pattern and no matching source versions",
+			sourceVersions: []models.Version{
+				testutils.NewVersion("0.0.1-alpha"),
+			},
+			streamPattern:          testutils.NewVersionPattern("*.*.*-alpha"),
+			increment:              models.Patch,
+			wantIncrementedVersion: testutils.NewVersion("0.0.1-alpha.0"),
 			wantErr:                false,
 		},
 	}

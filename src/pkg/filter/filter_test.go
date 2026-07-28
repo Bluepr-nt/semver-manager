@@ -2,9 +2,10 @@ package filter
 
 import (
 	"errors"
+	"testing"
+
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/testutils"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -93,7 +94,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("2.0.0"),
 					testutils.NewVersion("1.1.0"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 			want:    testutils.NewVersion("1.1.0"),
 			wantErr: false,
 		},
@@ -105,7 +107,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("2.0.0"),
 					testutils.NewVersion("1.1.0"),
 				},
-				streamPattern: testutils.NewVersionPattern("3.*.*")},
+				streamPattern: testutils.NewVersionPattern("3.*.*"),
+			},
 			want:    models.Version{},
 			wantErr: true,
 		},
@@ -117,7 +120,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("1.2.0"),
 					testutils.NewVersion("1.1.0"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 
 			want:    testutils.NewVersion("1.2.0"),
 			wantErr: false,
@@ -126,7 +130,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 			name: "No versions provided",
 			args: args{
 				versions:      []models.Version{},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 			want:    models.Version{},
 			wantErr: true,
 		},
@@ -138,7 +143,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("1.0.0"),
 					testutils.NewVersion("3.0.0"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 			want:    testutils.NewVersion("1.0.0"),
 			wantErr: false,
 		},
@@ -150,7 +156,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("1.0.2"),
 					testutils.NewVersion("1.0.3"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 
 			want:    testutils.NewVersion("1.0.3"),
 			wantErr: false,
@@ -163,7 +170,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("1.2.2"),
 					testutils.NewVersion("1.3.3"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*")},
+				streamPattern: testutils.NewVersionPattern("1.*.*"),
+			},
 			want:    testutils.NewVersion("1.3.3"),
 			wantErr: false,
 		},
@@ -175,7 +183,8 @@ func TestGetHighestStreamVersion(t *testing.T) {
 					testutils.NewVersion("1.2.2-alpha"),
 					testutils.NewVersion("1.3.3"),
 				},
-				streamPattern: testutils.NewVersionPattern("1.*.*-alpha")},
+				streamPattern: testutils.NewVersionPattern("1.*.*-alpha"),
+			},
 			want:    testutils.NewVersion("1.2.2-alpha"),
 			wantErr: false,
 		},

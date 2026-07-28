@@ -2,10 +2,11 @@ package increment
 
 import (
 	"fmt"
+	"strconv"
+
 	"src/cmd/smgr/models"
 	"src/cmd/smgr/pkg/filter"
 	"src/cmd/smgr/utils"
-	"strconv"
 )
 
 func IncrementVersion(sourceVersions []models.Version, streamPattern models.VersionPattern, increment models.Increment) (incrementedVersion models.Version, err error) {
@@ -15,10 +16,8 @@ func IncrementVersion(sourceVersions []models.Version, streamPattern models.Vers
 
 	if streamPattern.IsPRPattern() {
 		incrementedVersion, err = IncrementPReleaseToStream(sourceVersions, streamPattern, increment)
-
 	} else {
 		incrementedVersion, err = IncrementReleaseToStream(sourceVersions, streamPattern, increment)
-
 	}
 
 	return incrementedVersion, err
@@ -75,7 +74,12 @@ func IncrementPReleaseToStream(sourceVersions []models.Version, streamPattern mo
 		if !streamVersion.Release.IsHigherThan(highestStreamVersion.Release) && increment == models.None && highestStreamVersion.IsRelease() {
 			increment = models.Patch
 		}
-		newVersion = IncrementRelease(highestStreamVersion, increment)
+		// if the highest stream release is higher than the highest release version
+		if highestStreamVersion.IsRelease() {
+			newVersion = IncrementRelease(highestStreamVersion, increment)
+		} else if !streamVersion.Release.IsHigherThan(highestStreamVersion.Release) {
+			newVersion.Release = highestStreamVersion.Release
+		}
 
 		if !streamVersion.Prerelease.IsHigherThan(highestStreamVersion.Prerelease) {
 			newVersion.Prerelease = PrereleaseIncrement(highestStreamVersion.Prerelease)
@@ -96,14 +100,12 @@ func isStreamEmpty(err error) bool {
 }
 
 func PrereleaseIncrement(prVersion models.PRVersion) models.PRVersion {
-
 	incrementedIdentifier, err := PRIdentifierIncrement(prVersion.LastID())
 	if err != nil {
 
 		newId, _ := models.ParsePrIdentifier("0")
 		prVersion.Identifiers = append(prVersion.Identifiers, newId)
 	} else {
-
 		prVersion.Identifiers[len(prVersion.Identifiers)-1] = incrementedIdentifier
 	}
 

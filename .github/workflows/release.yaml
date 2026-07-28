@@ -50,8 +50,10 @@ jobs:
       id: commit_increment
       uses: Bluepr-nt/Commit-Increment@main
       with:
-        major_pattern: "^((build|ci|docs|feat|fix|perf|refactor|test)(\\([a-z 0-9,.\\-]+\\))?!: [\\w \\(\\),:.;\\-#&']+|\\nBREAKING CHANGES: [\\w \\(\\),:.;\\-#&']+)$"
-        minor_pattern: "^(feat)(\\([a-z 0-9,.\\-]+\\))?!?: [\\w \\(\\),:.;\\-#&']+$"
+        major_pattern: |
+          ^((build|ci|docs|feat|fix|perf|refactor|test)(\([a-z 0-9,.\-]+\))?!: [\w \(\),:.;\-#&']+|\nBREAKING CHANGES: [\w \(\),:.;\-#&']+)$
+        minor_pattern: |
+          ^(feat)(\([a-z 0-9,.\-]+\))?!?: [\w \(\),:.;\-#&']+$
     - name: Checkout code
       uses: actions/checkout@v6
       with:
